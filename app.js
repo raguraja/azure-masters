@@ -820,32 +820,9 @@ function showNodePopup(d, clientX, clientY) {
     pointer-events:auto;
   `;
 
-  // ── Position FAR from press point so finger/cursor doesn't obscure ──
-  const vw = window.innerWidth, vh = window.innerHeight;
-  const pw = 320, ph = 240;          // approximate popup size
-  const PRESS_OFFSET = 80;            // distance from press
-  let left, top;
-
-  // Prefer ABOVE press point (best for touch — finger is below)
-  if (clientY - ph - PRESS_OFFSET > 10) {
-    top  = clientY - ph - PRESS_OFFSET;
-    left = clientX - pw / 2;
-  } else if (clientY + PRESS_OFFSET + ph + 10 < vh) {
-    // Below press point if no room above
-    top  = clientY + PRESS_OFFSET;
-    left = clientX - pw / 2;
-  } else {
-    // Sideways — anchor to opposite side of viewport
-    top  = vh / 2 - ph / 2;
-    left = clientX < vw / 2 ? clientX + PRESS_OFFSET : clientX - pw - PRESS_OFFSET;
-  }
-  // Clamp to viewport with margin
-  if (left < 10) left = 10;
-  if (left + pw > vw - 10) left = vw - pw - 10;
-  if (top < 10) top = 10;
-  if (top + ph > vh - 10) top = vh - ph - 10;
-  popup.style.left = left + 'px';
-  popup.style.top  = top  + 'px';
+  // Fixed bottom-right — never overlaps the map
+  popup.style.right  = '20px';
+  popup.style.bottom = '20px';
 
   popup.innerHTML = `
     <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">
