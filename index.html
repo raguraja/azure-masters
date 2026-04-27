@@ -29,12 +29,14 @@
     <button class="ep-btn ep-az500" data-route="az500">AZ-500</button>
     <button class="ep-btn ep-az700" data-route="az700">AZ-700</button>
   </nav>
-  <div class="topbar-right">
+  <div class="topbar-right" style="display:flex;align-items:center;gap:8px;">
+    <button id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark mode" style="background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:5px 9px;cursor:pointer;font-size:15px;flex-shrink:0;line-height:1;">🌙</button>
     <div class="search-wrap">
       <input type="search" id="searchInput" placeholder="Search topics…" autocomplete="off">
       <div class="search-results" id="searchResults"></div>
     </div>
   </div>
+
 </header>
 
 <!-- ── Layout ── -->

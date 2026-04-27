@@ -8,6 +8,21 @@ let currentSection = null;
 let quizState = {};
 const visited = JSON.parse(localStorage.getItem('az-visited') || '{}');
 
+// ── Theme ─────────────────────────────────────────────────────────────────────
+(function initTheme() {
+  if (localStorage.getItem('az-theme') === 'light') {
+    document.body.classList.add('light');
+    const btn = document.getElementById('themeToggle');
+    if (btn) btn.textContent = '☀️';
+  }
+})();
+function toggleTheme() {
+  const light = document.body.classList.toggle('light');
+  localStorage.setItem('az-theme', light ? 'light' : 'dark');
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = light ? '☀️' : '🌙';
+}
+
 // ── Keyboard Navigation ────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -241,12 +256,19 @@ function renderHub() {
   };
 
   pg.innerHTML = `
+    <div class="hub-map-wrap">
+      <div class="hub-map-header">
+        <span>🗺️ Azure Services — Bird's Eye View</span>
+        <span style="font-size:11px;color:var(--text-muted);font-weight:400">Click node · Scroll to zoom · Drag to pan</span>
+        <button class="btn btn-ghost" style="font-size:11px;padding:4px 12px;margin-left:auto" onclick="openMap()">⛶ Full Screen</button>
+      </div>
+      <div id="hubMapTree" style="height:400px;cursor:grab;background:rgba(5,8,15,0.6);position:relative;"></div>
+    </div>
     <div class="hub-hero">
       <div class="hub-title"><span class="hub-grad">Azure</span><br>Azure for SRE &amp; Administration</div>
       <p class="hub-desc">Comprehensive exam prep for 6 Azure certifications. Interactive flowcharts, service hierarchies, and 100+ practice questions.</p>
       <div class="hub-cta">
         <button class="btn btn-primary" onclick="navigate('az104')">⚙️ Start with AZ-104 Admin</button>
-        <button class="btn btn-secondary" onclick="openMap()">🗺️ Explore Azure Services Map</button>
       </div>
       <div class="hub-stats">
         <div><div class="hub-stat-num">6</div><div class="hub-stat-label">Exams Covered</div></div>
@@ -279,6 +301,8 @@ function renderHub() {
           }).join('')}
         </div>
       </div>`).join('')}`;
+
+  setTimeout(() => initAzureMap('hubMapTree'), 80);
 }
 
 // ── Exam Overview ──────────────────────────────────────────────────────────────
@@ -525,7 +549,8 @@ function retakeQuiz(id) {
 function openMap() {
   document.getElementById('mapOverlay').style.display = 'flex';
   document.getElementById('mapOverlay').style.flexDirection = 'column';
-  if (!window._mapInitialized) { initAzureMap(); window._mapInitialized = true; }
+  window._mapInited = window._mapInited || {};
+  if (!window._mapInited.mapTree) { initAzureMap('mapTree'); window._mapInited.mapTree = true; }
   renderMapLegend();
 }
 
@@ -540,20 +565,27 @@ function renderMapLegend() {
   lg.innerHTML = window.MAP_LEGEND.map(l => `<div class="map-legend-item"><div class="map-legend-dot" style="background:${l.color}"></div>${l.label}</div>`).join('');
 }
 
-function initAzureMap() {
-  const container = document.getElementById('mapTree');
+function initAzureMap(containerId = 'mapTree') {
+  const container = document.getElementById(containerId);
   if (!container || !window.AZURE_TREE) return;
+  container.querySelectorAll('svg, button, div.map-zoom-ctrl').forEach(el => el.remove());
 
   const W = container.clientWidth || 1000;
   const H = container.clientHeight || 650;
 
   // ── SVG setup ──
-  const svg = d3.select('#mapTree').append('svg')
+  const svg = d3.select(`#${containerId}`).append('svg')
     .attr('width', '100%').attr('height', '100%');
 
   const zoom = d3.zoom().scaleExtent([0.05, 4])
     .on('zoom', e => g.attr('transform', e.transform));
   svg.call(zoom);
+
+  // Transparent background rect — catches empty-space clicks to dismiss popup
+  svg.append('rect')
+    .attr('width', '100%').attr('height', '100%')
+    .attr('fill', 'transparent')
+    .on('click', () => dismissNodePopup());
 
   const g = svg.append('g');
 
@@ -749,31 +781,15 @@ function initAzureMap() {
     svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
   }, 450);
 
-  // ── Search ──
-  document.getElementById('mapSearch')?.addEventListener('input', function () {
-    const q = this.value.toLowerCase().trim();
-    if (!q) {
-      g.selectAll('.label-text')
-        .attr('opacity', 1)
-        .style('fill', d => d.depth === 0 ? '#e2e8f0' : d.depth === 1 ? getColor(d) : '#8892a4');
-      g.selectAll('.label-bg').attr('opacity', 0.78);
-      g.selectAll('.link').attr('stroke', d => getColor(d.target) + '35');
-      return;
-    }
-    const match = d => d.data.name.toLowerCase().includes(q) || (d.data.desc || '').toLowerCase().includes(q);
-    g.selectAll('.label-text')
-      .attr('opacity', d => match(d) ? 1 : 0.15)
-      .style('fill', d => match(d) ? '#ffffff' : '#444f62');
-    g.selectAll('.label-bg')
-      .attr('opacity', d => match(d) ? 0.9 : 0.3);
-    g.selectAll('.link')
-      .attr('stroke', d => match(d.target) ? getColor(d.target) + '80' : 'rgba(255,255,255,0.03)');
-  });
+  // ── Map zoom/reset controls ──
+  const btnBase = 'background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--text-dim);border-radius:6px;cursor:pointer;font-family:inherit;transition:background 0.15s;';
+  const ctrl = document.createElement('div');
+  ctrl.className = 'map-zoom-ctrl';
+  ctrl.style.cssText = 'position:absolute;top:8px;left:8px;display:flex;gap:4px;z-index:10';
 
-  // Reset zoom button
   const resetBtn = document.createElement('button');
-  resetBtn.textContent = '⌖ Reset View';
-  resetBtn.style.cssText = 'position:absolute;top:8px;left:8px;padding:5px 12px;background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--text-dim);border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;z-index:10';
+  resetBtn.textContent = '⌖ Reset';
+  resetBtn.style.cssText = btnBase + 'padding:5px 10px;font-size:11px;';
   resetBtn.onclick = () => {
     const b = g.node().getBBox();
     const scaleX = (W - 60) / b.width;
@@ -783,8 +799,43 @@ function initAzureMap() {
     const ty = H / 2 - (b.y + b.height / 2) * scale;
     svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
   };
+
+  const zoomInBtn = document.createElement('button');
+  zoomInBtn.textContent = '+';
+  zoomInBtn.style.cssText = btnBase + 'padding:5px 11px;font-size:15px;font-weight:700;';
+  zoomInBtn.onclick = () => svg.transition().duration(250).call(zoom.scaleBy, 1.5);
+
+  const zoomOutBtn = document.createElement('button');
+  zoomOutBtn.textContent = '−';
+  zoomOutBtn.style.cssText = btnBase + 'padding:5px 11px;font-size:15px;font-weight:700;';
+  zoomOutBtn.onclick = () => svg.transition().duration(250).call(zoom.scaleBy, 0.67);
+
+  ctrl.append(resetBtn, zoomOutBtn, zoomInBtn);
   container.style.position = 'relative';
-  container.appendChild(resetBtn);
+  container.appendChild(ctrl);
+
+  // ── Map search (overlay only) ──
+  if (containerId === 'mapTree') {
+    document.getElementById('mapSearch')?.addEventListener('input', function () {
+      const q = this.value.toLowerCase().trim();
+      if (!q) {
+        g.selectAll('.label-text')
+          .attr('opacity', 1)
+          .style('fill', d => d.depth === 0 ? '#e2e8f0' : d.depth === 1 ? getColor(d) : '#8892a4');
+        g.selectAll('.label-bg').attr('opacity', 0.78);
+        g.selectAll('.link').attr('stroke', d => getColor(d.target) + '35');
+        return;
+      }
+      const match = d => d.data.name.toLowerCase().includes(q) || (d.data.desc || '').toLowerCase().includes(q);
+      g.selectAll('.label-text')
+        .attr('opacity', d => match(d) ? 1 : 0.15)
+        .style('fill', d => match(d) ? '#ffffff' : '#444f62');
+      g.selectAll('.label-bg')
+        .attr('opacity', d => match(d) ? 0.9 : 0.3);
+      g.selectAll('.link')
+        .attr('stroke', d => match(d.target) ? getColor(d.target) + '80' : 'rgba(255,255,255,0.03)');
+    });
+  }
 }
 
 function getExamColor(code) {
