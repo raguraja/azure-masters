@@ -158,6 +158,9 @@ function renderHubSidebar() {
   const sb = document.getElementById('sidebarContent');
   if (!sb) return;
   sb.innerHTML = `
+    <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="openMap()">🗺️ Azure Service Map</button>
+    </div>
     <div style="padding:20px 16px;border-bottom:1px solid var(--border)">
       <div style="font-size:22px;font-weight:900;background:linear-gradient(135deg,#50abf1,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Azure</div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:4px">SRE & Administration Hub</div>
@@ -169,9 +172,6 @@ function renderHubSidebar() {
           <span style="font-size:16px">${e.meta.icon}</span>
           <div><div style="font-size:12px;font-weight:700;color:${e.meta.color}">${e.meta.code}</div><div style="font-size:10px;color:var(--text-muted)">${e.meta.level}</div></div>
         </div>`).join('')}
-    </div>
-    <div style="padding:12px 16px">
-      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="openMap()">🗺️ Azure Service Map</button>
     </div>`;
 }
 
@@ -256,19 +256,12 @@ function renderHub() {
   };
 
   pg.innerHTML = `
-    <div class="hub-map-wrap">
-      <div class="hub-map-header">
-        <span>🗺️ Azure Services — Bird's Eye View</span>
-        <span style="font-size:11px;color:var(--text-muted);font-weight:400">Click node · Scroll to zoom · Drag to pan</span>
-        <button class="btn btn-ghost" style="font-size:11px;padding:4px 12px;margin-left:auto" onclick="openMap()">⛶ Full Screen</button>
-      </div>
-      <div id="hubMapTree" style="height:400px;cursor:grab;background:rgba(5,8,15,0.6);position:relative;"></div>
-    </div>
     <div class="hub-hero">
       <div class="hub-title"><span class="hub-grad">Azure</span><br>Azure for SRE &amp; Administration</div>
       <p class="hub-desc">Comprehensive exam prep for 6 Azure certifications. Interactive flowcharts, service hierarchies, and 100+ practice questions.</p>
       <div class="hub-cta">
         <button class="btn btn-primary" onclick="navigate('az104')">⚙️ Start with AZ-104 Admin</button>
+        <button class="btn btn-secondary" onclick="openMap()">🗺️ Explore Azure Services Map</button>
       </div>
       <div class="hub-stats">
         <div><div class="hub-stat-num">6</div><div class="hub-stat-label">Exams Covered</div></div>
@@ -301,8 +294,6 @@ function renderHub() {
           }).join('')}
         </div>
       </div>`).join('')}`;
-
-  setTimeout(() => initAzureMap('hubMapTree'), 80);
 }
 
 // ── Exam Overview ──────────────────────────────────────────────────────────────
