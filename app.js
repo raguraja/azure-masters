@@ -21,6 +21,14 @@ function toggleTheme() {
   localStorage.setItem('az-theme', light ? 'light' : 'dark');
   const btn = document.getElementById('themeToggle');
   if (btn) btn.textContent = light ? '☀️' : '🌙';
+  // Re-init map so node/link colors update immediately
+  window._mapInited = {};
+  const overlay = document.getElementById('mapOverlay');
+  if (overlay && overlay.style.display !== 'none') {
+    initAzureMap('mapTree');
+    window._mapInited.mapTree = true;
+    renderMapLegend();
+  }
 }
 
 // ── Keyboard Navigation ────────────────────────────────────────────────────────
@@ -680,13 +688,14 @@ function initAzureMap(containerId = 'mapTree') {
       .attr('stroke', d => getColor(d))
       .style('filter', d => `drop-shadow(0 0 ${d.depth <= 1 ? 7 : 3}px ${getColor(d)}55)`);
 
+    const isLight = document.body.classList.contains('light');
     nodeUpdate.select('.label-text').transition().duration(380)
       .attr('x', d => (d.children || d._children) ? -16 : 16)
       .attr('text-anchor', d => (d.children || d._children) ? 'end' : 'start')
       .text(labelText)
       .style('font-size', d => d.depth === 0 ? '14px' : d.depth === 1 ? '13px' : d.depth === 2 ? '11px' : '10px')
       .style('font-weight', d => d.depth <= 1 ? '700' : '400')
-      .style('fill', d => d.depth === 0 ? '#e2e8f0' : d.depth === 1 ? getColor(d) : '#8892a4')
+      .style('fill', d => d.depth === 0 ? (isLight ? '#0d1421' : '#e2e8f0') : d.depth === 1 ? getColor(d) : (isLight ? '#4a5568' : '#8892a4'))
       .attr('opacity', 1);
 
     nodeUpdate.each(function() {
@@ -764,17 +773,19 @@ function initAzureMap(containerId = 'mapTree') {
     document.getElementById('mapSearch')?.addEventListener('input', function () {
       const q = this.value.toLowerCase().trim();
       if (!q) {
+        const il2 = document.body.classList.contains('light');
         g.selectAll('.label-text').attr('opacity', 1)
-          .style('fill', d => d.depth === 0 ? '#e2e8f0' : d.depth === 1 ? getColor(d) : '#8892a4');
+          .style('fill', d => d.depth === 0 ? (il2 ? '#0d1421' : '#e2e8f0') : d.depth === 1 ? getColor(d) : (il2 ? '#4a5568' : '#8892a4'));
         g.selectAll('.label-bg').attr('opacity', 0.78);
         g.selectAll('.link').attr('stroke', d => getColor(d.target) + '35');
         return;
       }
+      const il = document.body.classList.contains('light');
       const match = d => d.data.name.toLowerCase().includes(q) || (d.data.desc || '').toLowerCase().includes(q);
       g.selectAll('.label-text').attr('opacity', d => match(d) ? 1 : 0.15)
-        .style('fill', d => match(d) ? '#ffffff' : '#444f62');
+        .style('fill', d => match(d) ? (il ? '#0d1421' : '#ffffff') : (il ? '#9aacbe' : '#444f62'));
       g.selectAll('.label-bg').attr('opacity', d => match(d) ? 0.9 : 0.3);
-      g.selectAll('.link').attr('stroke', d => match(d.target) ? getColor(d.target) + '80' : 'rgba(255,255,255,0.03)');
+      g.selectAll('.link').attr('stroke', d => match(d.target) ? getColor(d.target) + '80' : (il ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.03)'));
     });
   }
 }
@@ -799,12 +810,13 @@ function showNodePopup(d, clientX, clientY) {
   const exams = (d.data.exams || []);
   const docsUrl = getDocsUrl(d);
 
+  const isLight = document.body.classList.contains('light');
   const popup = document.createElement('div');
   popup.id = 'mapNodePopup';
   popup.style.cssText = `
-    position:fixed;background:#0b1120;border:1px solid ${c}50;border-left:3px solid ${c};
+    position:fixed;background:${isLight ? '#ffffff' : '#0b1120'};border:1px solid ${c}50;border-left:3px solid ${c};
     border-radius:10px;padding:14px 16px;width:320px;z-index:700;
-    box-shadow:0 24px 70px rgba(0,0,0,0.85);animation:fadeUp 0.18s ease;
+    box-shadow:0 24px 70px rgba(0,0,0,${isLight ? '0.18' : '0.85'});animation:fadeUp 0.18s ease;
     pointer-events:auto;
   `;
 
@@ -843,7 +855,7 @@ function showNodePopup(d, clientX, clientY) {
         ${d.depth === 1 ? `<div style="font-size:10px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:1px">Category</div>` : ''}
       </div>
     </div>
-    <p style="font-size:12.5px;color:#a0adbf;line-height:1.65;margin-bottom:8px">${desc}</p>
+    <p style="font-size:12.5px;color:${isLight ? '#4a5568' : '#a0adbf'};line-height:1.65;margin-bottom:8px">${desc}</p>
     ${d.data.tip ? `<div style="padding:7px 11px;background:rgba(0,212,255,0.07);border-left:2px solid #00d4ff;border-radius:4px;font-size:11px;color:#9de0f5;line-height:1.55;margin-bottom:8px">🎯 ${d.data.tip}</div>` : ''}
     ${exams.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px">${exams.map(e=>`<span style="padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;border:1px solid ${getExamColor(e)}40;color:${getExamColor(e)};background:${getExamColor(e)}15">${e}</span>`).join('')}</div>` : ''}
     <a href="${docsUrl}" target="_blank" rel="noopener noreferrer"
@@ -857,7 +869,7 @@ function showNodePopup(d, clientX, clientY) {
       📖 More Details on Microsoft Learn
       <span style="font-size:11px;opacity:0.85">↗</span>
     </a>
-    <div style="font-size:10px;color:#444f62;padding-top:8px;margin-top:8px;border-top:1px solid var(--border)">
+    <div style="font-size:10px;color:${isLight ? '#718096' : '#444f62'};padding-top:8px;margin-top:8px;border-top:1px solid var(--border)">
       ${childCount ? (d.children ? `▾ Expanded · ${childCount} items` : `▸ Collapsed · ${childCount} items inside`) : 'Leaf service'}
       &nbsp;·&nbsp; release to dismiss
     </div>`;

@@ -369,6 +369,30 @@ body.light .sb-prog-bar { background: rgba(0,0,0,0.1); }
 body.light .map-controls input { background: rgba(0,0,0,0.05); color: var(--text); }
 body.light .hub-map-wrap { background: rgba(0,0,0,0.02); }
 
+/* ── Map SVG: CSS overrides for XML presentation attributes (light mode) ── */
+body.light .link                { stroke: rgba(30,60,160,0.35); }
+body.light .label-bg            { fill: rgba(240,244,248,0.96) !important; }
+body.light .label-text          { fill: #1e2a3a !important; }
+body.light .node circle         { opacity: 0.9; }
+
+/* ── General light mode component fixes ── */
+body.light .btn-secondary       { background: rgba(0,0,0,0.05); }
+body.light .btn-ghost           { background: none; }
+body.light .exam-tip            { background: rgba(0,120,212,0.08); color: #1a5a8a; border-color: #0078d4; }
+body.light .cmp-ok              { color: #1a7a4a; }
+body.light .cmp-no              { color: #c0392b; }
+body.light .cmp-partial         { color: #b7770d; }
+body.light .code-block .kw      { color: #0550ae; }
+body.light .code-block .str     { color: #1a7a4a; }
+body.light .code-block .cmt     { color: #8a9baf; }
+body.light .kql-kw              { color: #0550ae; }
+body.light .kql-fn              { color: #7c3aed; }
+body.light .kql-str             { color: #1a7a4a; }
+body.light .kql-op              { color: #b7770d; }
+body.light .qz-opt:hover:not(:disabled) { background: rgba(0,120,212,0.08); }
+body.light .search-result-item:hover    { background: rgba(0,0,0,0.04); }
+body.light .map-controls input  { border-color: rgba(0,0,0,0.15); }
+
 /* ── Responsive */
 @media (max-width: 1100px) {
   .sidebar { position: fixed; top: var(--topbar-h); left: 0; bottom: 0; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(.4,0,.2,1); z-index: 150; }
