@@ -561,18 +561,16 @@ function initAzureMap(containerId = 'mapTree') {
   if (!container || !window.AZURE_TREE) return;
   container.querySelectorAll('svg, button, div.map-zoom-ctrl').forEach(el => el.remove());
 
-  const W = container.clientWidth || 1000;
+  const W = container.clientWidth || 1200;
   const H = container.clientHeight || 650;
 
-  // ── SVG setup ──
   const svg = d3.select(`#${containerId}`).append('svg')
     .attr('width', '100%').attr('height', '100%');
 
-  const zoom = d3.zoom().scaleExtent([0.05, 4])
+  const zoom = d3.zoom().scaleExtent([0.03, 4])
     .on('zoom', e => g.attr('transform', e.transform));
   svg.call(zoom);
 
-  // Transparent background rect — catches empty-space clicks to dismiss popup
   svg.append('rect')
     .attr('width', '100%').attr('height', '100%')
     .attr('fill', 'transparent')
@@ -580,18 +578,18 @@ function initAzureMap(containerId = 'mapTree') {
 
   const g = svg.append('g');
 
-  // ── Horizontal left→right tree ──
-  const COL_WIDTH = 280;   // horizontal gap between depth levels (more room)
-  const ROW_HEIGHT = 38;   // vertical gap between sibling nodes (prevents overlap)
+  // ── Top-to-bottom layout — categories spread across screen horizontally ──
+  const NODE_W  = 150;   // horizontal space per node (breadth)
+  const LEVEL_H = 105;   // vertical gap between depth levels
 
   const tree = d3.tree()
-    .nodeSize([ROW_HEIGHT, COL_WIDTH])
-    .separation((a, b) => a.parent === b.parent ? 1.1 : 1.8);
+    .nodeSize([NODE_W, LEVEL_H])
+    .separation((a, b) => a.parent === b.parent ? 1.0 : 1.5);
 
   let root = d3.hierarchy(window.AZURE_TREE);
   root.x0 = 0; root.y0 = 0;
 
-  // Collapse beyond depth 2 initially (show root + categories + service groups)
+  // Show root + categories (depth 1); collapse deeper levels
   root.descendants().forEach(d => {
     if (d.depth >= 2 && d.children) { d._children = d.children; d.children = null; }
   });
@@ -599,32 +597,22 @@ function initAzureMap(containerId = 'mapTree') {
   const tooltip = document.getElementById('tooltip');
 
   function getColor(d) {
-    let n = d;
-    while (n) { if (n.data.color) return n.data.color; n = n.parent; }
-    return '#0078d4';
+    let n = d; while (n) { if (n.data.color) return n.data.color; n = n.parent; } return '#0078d4';
   }
 
-  // Cubic bezier horizontal link: M source → C midpoint → target
+  // Vertical cubic bezier: source → target flowing top-to-bottom
   function diagonal(s, d) {
-    const mx = (s.y + d.y) / 2;
-    return `M ${s.y} ${s.x} C ${mx} ${s.x}, ${mx} ${d.x}, ${d.y} ${d.x}`;
+    const my = (s.y + d.y) / 2;
+    return `M ${s.x} ${s.y} C ${s.x} ${my}, ${d.x} ${my}, ${d.x} ${d.y}`;
   }
-
-  // ── Long-press state ──
-  const LONG_PRESS_MS = 550;
-  const PRESS_MOVE_TOLERANCE = 8;
-  let pressTimer = null;
-  let pressStartX = 0, pressStartY = 0;
-  let pressActive = false;
-  let popupShownByPress = false;
 
   function update(source) {
     const treeData = tree(root);
     const nodes = treeData.descendants();
     const links  = treeData.links();
 
-    // y = horizontal position (depth × col width), x = vertical position
-    nodes.forEach(d => { d.y = d.depth * COL_WIDTH; });
+    // x = horizontal (breadth), y = vertical (depth × level height)
+    nodes.forEach(d => { d.y = d.depth * LEVEL_H; });
 
     // ── Links ──
     const link = g.selectAll('.link')
@@ -637,7 +625,7 @@ function initAzureMap(containerId = 'mapTree') {
       .merge(link)
       .transition().duration(380)
       .attr('d', d => diagonal(d.source, d.target))
-      .attr('stroke', d => getColor(d.target) + '35');
+      .attr('stroke', d => getColor(d.target) + '40');
 
     link.exit().transition().duration(260)
       .attr('d', () => diagonal({ x: source.x, y: source.y }, { x: source.x, y: source.y }))
@@ -648,18 +636,17 @@ function initAzureMap(containerId = 'mapTree') {
       .data(nodes, d => d.id || (d.id = ++_uid));
 
     const nodeEnter = node.enter().append('g').attr('class', 'node')
-      .attr('transform', () => `translate(${source.y0 || 0},${source.x0 || 0})`)
+      .attr('transform', () => `translate(${source.x0 || 0},${source.y0 || 0})`)
       .style('cursor', 'pointer')
       .on('click', (event, d) => {
         event.stopPropagation();
-        tooltip.style.opacity = '0';   // hide hover tooltip — popup takes over
-        if (d.children)   { d._children = d.children; d.children = null; }
-        else if (d._children) { d.children = d._children; d._children = null; }
+        tooltip.style.opacity = '0';
+        if (d.children)        { d._children = d.children; d.children = null; }
+        else if (d._children)  { d.children = d._children; d._children = null; }
         update(d);
         showNodePopup(d, event.clientX, event.clientY);
       })
       .on('mouseover', (event, d) => {
-        // Suppress hover tooltip while a click-popup is open
         if (document.getElementById('mapNodePopup')) return;
         tooltip.style.opacity = '1';
         const short = d.data.desc ? d.data.desc.slice(0, 90) + (d.data.desc.length > 90 ? '…' : '') : '';
@@ -669,110 +656,102 @@ function initAzureMap(containerId = 'mapTree') {
       })
       .on('mouseout', () => { tooltip.style.opacity = '0'; });
 
-    // Truncate long names so they don't overflow into siblings
+    const circleR = d => d.depth === 0 ? 12 : d.depth === 1 ? 8 : d._children ? 5 : 3;
     const truncate = (s, max) => s.length > max ? s.slice(0, max - 1) + '…' : s;
     const labelText = d => {
-      const max = d.depth === 0 ? 30 : d.depth === 1 ? 24 : 28;
+      const max = d.depth === 0 ? 18 : d.depth === 1 ? 12 : 13;
       return (d.data.icon ? d.data.icon + ' ' : '') + truncate(d.data.name, max);
     };
 
-    // Circle
     nodeEnter.append('circle')
       .attr('r', 0)
       .attr('stroke-width', d => d.depth === 0 ? 3 : 2);
 
-    // Background rectangle behind the text — improves readability on dense trees
     nodeEnter.append('rect')
       .attr('class', 'label-bg')
-      .attr('rx', 4).attr('ry', 4)
+      .attr('rx', 3).attr('ry', 3)
       .attr('opacity', 0)
       .attr('pointer-events', 'none')
       .attr('fill', '#05080f');
 
-    // Label
+    // Label below the circle for all nodes
     nodeEnter.append('text')
       .attr('class', 'label-text')
-      .attr('dy', '0.32em')
+      .attr('text-anchor', 'middle')
       .attr('opacity', 0);
 
-    // Collapse indicator (+/–)
     nodeEnter.append('text')
       .attr('class', 'node-ctrl')
       .attr('dy', '0.32em')
       .style('font-size', '9px').style('pointer-events', 'none');
 
-    // Merge & animate
     const nodeUpdate = nodeEnter.merge(node);
 
     nodeUpdate.transition().duration(380)
-      .attr('transform', d => `translate(${d.y},${d.x})`);
+      .attr('transform', d => `translate(${d.x},${d.y})`);
 
     nodeUpdate.select('circle').transition().duration(380)
-      .attr('r', d => d.depth === 0 ? 13 : d.depth === 1 ? 8 : d._children ? 6 : 4)
+      .attr('r', circleR)
       .attr('fill', d => getColor(d) + (d._children ? '18' : '28'))
       .attr('stroke', d => getColor(d))
       .style('filter', d => `drop-shadow(0 0 ${d.depth <= 1 ? 7 : 3}px ${getColor(d)}55)`);
 
     nodeUpdate.select('.label-text').transition().duration(380)
-      .attr('x', d => (d.children || d._children) ? -16 : 16)
-      .attr('text-anchor', d => (d.children || d._children) ? 'end' : 'start')
+      .attr('y', d => circleR(d) + 13)
       .text(labelText)
-      .style('font-size', d => d.depth === 0 ? '14px' : d.depth === 1 ? '13px' : d.depth === 2 ? '11px' : '10px')
+      .style('font-size', d => d.depth === 0 ? '13px' : d.depth === 1 ? '11px' : '9px')
       .style('font-weight', d => d.depth <= 1 ? '700' : '400')
       .style('fill', d => d.depth === 0 ? '#e2e8f0' : d.depth === 1 ? getColor(d) : '#8892a4')
       .attr('opacity', 1);
 
-    // Position the label background to wrap the text — call after text is rendered
-    nodeUpdate.each(function(d) {
+    nodeUpdate.each(function() {
       const sel = d3.select(this);
       const txt = sel.select('.label-text').node();
       if (!txt) return;
-      // Measure text after it's rendered
       try {
         const bb = txt.getBBox();
         sel.select('.label-bg')
-          .attr('x', bb.x - 3)
-          .attr('y', bb.y - 1)
-          .attr('width', bb.width + 6)
-          .attr('height', bb.height + 2)
+          .attr('x', bb.x - 3).attr('y', bb.y - 1)
+          .attr('width', bb.width + 6).attr('height', bb.height + 2)
           .attr('opacity', 0.78);
-      } catch(e) { /* getBBox may fail before paint */ }
+      } catch(e) {}
     });
 
     nodeUpdate.select('.node-ctrl')
       .attr('x', 0).attr('text-anchor', 'middle')
-      .style('fill', d => getColor(d))
-      .style('font-weight', '700')
+      .style('fill', d => getColor(d)).style('font-weight', '700')
       .text(d => d._children ? '+' : '');
 
-    // Exit
     const nodeExit = node.exit().transition().duration(260)
-      .attr('transform', () => `translate(${source.y},${source.x})`)
-      .remove();
+      .attr('transform', () => `translate(${source.x},${source.y})`).remove();
     nodeExit.select('circle').attr('r', 0);
     nodeExit.selectAll('text').attr('opacity', 0);
     nodeExit.select('.label-bg').attr('opacity', 0);
 
-    // Save positions for next transition
     nodes.forEach(d => { d.x0 = d.x; d.y0 = d.y; });
   }
 
   let _uid = 0;
   update(root);
 
-  // Auto-fit after first render
-  setTimeout(() => {
+  function fitView() {
     const b = g.node().getBBox();
     if (!b.width) return;
     const scaleX = (W - 60) / b.width;
-    const scaleY = (H - 40) / b.height;
-    const scale  = Math.min(scaleX, scaleY, 0.75);
-    const tx = 40 - b.x * scale;
-    const ty = H / 2 - (b.y + b.height / 2) * scale;
-    svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+    const scaleY = (H - 80) / b.height;
+    const scale  = Math.min(scaleX, scaleY, 1.2);
+    const tx = W / 2 - (b.x + b.width  / 2) * scale;
+    const ty = 36    - b.y * scale;
+    return { tx, ty, scale };
+  }
+
+  // Auto-fit after first render
+  setTimeout(() => {
+    const f = fitView(); if (!f) return;
+    svg.call(zoom.transform, d3.zoomIdentity.translate(f.tx, f.ty).scale(f.scale));
   }, 450);
 
-  // ── Map zoom/reset controls ──
+  // ── Controls ──
   const btnBase = 'background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--text-dim);border-radius:6px;cursor:pointer;font-family:inherit;transition:background 0.15s;';
   const ctrl = document.createElement('div');
   ctrl.className = 'map-zoom-ctrl';
@@ -782,13 +761,8 @@ function initAzureMap(containerId = 'mapTree') {
   resetBtn.textContent = '⌖ Reset';
   resetBtn.style.cssText = btnBase + 'padding:5px 10px;font-size:11px;';
   resetBtn.onclick = () => {
-    const b = g.node().getBBox();
-    const scaleX = (W - 60) / b.width;
-    const scaleY = (H - 40) / b.height;
-    const scale  = Math.min(scaleX, scaleY, 0.75);
-    const tx = 40 - b.x * scale;
-    const ty = H / 2 - (b.y + b.height / 2) * scale;
-    svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+    const f = fitView(); if (!f) return;
+    svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.translate(f.tx, f.ty).scale(f.scale));
   };
 
   const zoomInBtn = document.createElement('button');
@@ -810,21 +784,17 @@ function initAzureMap(containerId = 'mapTree') {
     document.getElementById('mapSearch')?.addEventListener('input', function () {
       const q = this.value.toLowerCase().trim();
       if (!q) {
-        g.selectAll('.label-text')
-          .attr('opacity', 1)
+        g.selectAll('.label-text').attr('opacity', 1)
           .style('fill', d => d.depth === 0 ? '#e2e8f0' : d.depth === 1 ? getColor(d) : '#8892a4');
         g.selectAll('.label-bg').attr('opacity', 0.78);
-        g.selectAll('.link').attr('stroke', d => getColor(d.target) + '35');
+        g.selectAll('.link').attr('stroke', d => getColor(d.target) + '40');
         return;
       }
       const match = d => d.data.name.toLowerCase().includes(q) || (d.data.desc || '').toLowerCase().includes(q);
-      g.selectAll('.label-text')
-        .attr('opacity', d => match(d) ? 1 : 0.15)
+      g.selectAll('.label-text').attr('opacity', d => match(d) ? 1 : 0.12)
         .style('fill', d => match(d) ? '#ffffff' : '#444f62');
-      g.selectAll('.label-bg')
-        .attr('opacity', d => match(d) ? 0.9 : 0.3);
-      g.selectAll('.link')
-        .attr('stroke', d => match(d.target) ? getColor(d.target) + '80' : 'rgba(255,255,255,0.03)');
+      g.selectAll('.label-bg').attr('opacity', d => match(d) ? 0.9 : 0.2);
+      g.selectAll('.link').attr('stroke', d => match(d.target) ? getColor(d.target) + '80' : 'rgba(255,255,255,0.02)');
     });
   }
 }
