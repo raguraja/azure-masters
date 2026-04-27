@@ -851,7 +851,7 @@ function showNodePopup(d, clientX, clientY) {
       &nbsp;·&nbsp; release to dismiss
     </div>`;
 
-  document.getElementById('mapOverlay').appendChild(popup);
+  document.body.appendChild(popup);
 }
 
 function dismissNodePopup() {
