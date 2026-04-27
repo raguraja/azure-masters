@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Azure Masters — SRE & Admin Exam Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+</head>
+<body>
+
+<!-- ── Top Bar ── -->
+<header class="topbar" id="topbar">
+  <button class="topbar-burger" id="burgerBtn">☰</button>
+  <div class="topbar-logo" onclick="navigate('hub')">
+    <span class="logo-bolt">⚡</span>
+    <span class="logo-text">Azure Masters<br><small style="font-size:0.55em;font-weight:400;letter-spacing:0.05em;opacity:0.75;">by Ragu</small></span>
+  </div>
+  <nav class="exam-pills" id="examPills">
+    <button class="ep-btn ep-hub active" data-route="hub">🏠 Hub</button>
+    <button class="ep-btn ep-map" data-route="map">🗺️ Azure Map</button>
+    <div class="ep-div"></div>
+    <button class="ep-btn ep-az900" data-route="az900">AZ-900</button>
+    <button class="ep-btn ep-az104" data-route="az104">AZ-104</button>
+    <button class="ep-btn ep-az305" data-route="az305">AZ-305</button>
+    <button class="ep-btn ep-az400" data-route="az400">AZ-400</button>
+    <button class="ep-btn ep-az500" data-route="az500">AZ-500</button>
+    <button class="ep-btn ep-az700" data-route="az700">AZ-700</button>
+  </nav>
+  <div class="topbar-right">
+    <div class="search-wrap">
+      <input type="search" id="searchInput" placeholder="Search topics…" autocomplete="off">
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Layout ── -->
+<div class="layout" id="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div id="sidebarContent"></div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-area" id="mainArea">
+    <div id="pageContent"></div>
+  </main>
+
+</div>
+
+<!-- Azure Map overlay -->
+<div class="map-overlay" id="mapOverlay" style="display:none">
+  <div class="map-header">
+    <span class="map-title">🗺️ Azure Services — Bird's Eye View</span>
+    <span style="font-size:11px;color:var(--text-muted);margin-left:8px">Click node = popup · Click anywhere = dismiss · Scroll = zoom · Drag = pan</span>
+    <div class="map-controls">
+      <input type="search" id="mapSearch" placeholder="Search services…">
+      <button class="map-close" onclick="closeMap()">✕ Close</button>
+    </div>
+  </div>
+  <div class="map-body">
+    <div id="mapTree"></div>
+    <!-- detail panel removed — popup appears inline on click -->
+  </div>
+  <div class="map-legend" id="mapLegend"></div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- Scripts: data first, then app -->
+<script src="data/azure-tree.js"></script>
+<script src="exams/az900.js"></script>
+<script src="exams/az104.js"></script>
+<script src="exams/az305.js"></script>
+<script src="exams/az400.js"></script>
+<script src="exams/az500.js"></script>
+<script src="exams/az700.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
