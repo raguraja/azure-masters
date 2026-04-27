@@ -171,7 +171,7 @@ function renderHubSidebar() {
     </div>
     <div style="padding:20px 16px;border-bottom:1px solid var(--border)">
       <div style="font-size:22px;font-weight:900;background:linear-gradient(135deg,#50abf1,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Azure</div>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">SRE & Administration Hub</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">Azure Study Guide</div>
     </div>
     <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:10px">EXAM PATHS</div>
@@ -265,7 +265,7 @@ function renderHub() {
 
   pg.innerHTML = `
     <div class="hub-hero">
-      <div class="hub-title"><span class="hub-grad">Azure</span><br>Azure for SRE &amp; Administration</div>
+      <div class="hub-title"><span class="hub-grad">Azure</span><br>Azure Study Guide</div>
       <p class="hub-desc">Comprehensive exam prep for 6 Azure certifications. Interactive flowcharts, service hierarchies, and 100+ practice questions.</p>
       <div class="hub-cta">
         <button class="btn btn-primary" onclick="navigate('az104')">⚙️ Start with AZ-104 Admin</button>
