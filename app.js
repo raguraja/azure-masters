@@ -578,18 +578,17 @@ function initAzureMap(containerId = 'mapTree') {
 
   const g = svg.append('g');
 
-  // ── Top-to-bottom layout — categories spread across screen horizontally ──
-  const NODE_W  = 150;   // horizontal space per node (breadth)
-  const LEVEL_H = 105;   // vertical gap between depth levels
+  // ── Horizontal left→right tree ──
+  const COL_WIDTH  = 280;  // horizontal gap between depth levels
+  const ROW_HEIGHT = 26;   // vertical gap between sibling nodes (compact to reduce height)
 
   const tree = d3.tree()
-    .nodeSize([NODE_W, LEVEL_H])
-    .separation((a, b) => a.parent === b.parent ? 1.0 : 1.5);
+    .nodeSize([ROW_HEIGHT, COL_WIDTH])
+    .separation((a, b) => a.parent === b.parent ? 1.1 : 1.8);
 
   let root = d3.hierarchy(window.AZURE_TREE);
   root.x0 = 0; root.y0 = 0;
 
-  // Show root + categories (depth 1); collapse deeper levels
   root.descendants().forEach(d => {
     if (d.depth >= 2 && d.children) { d._children = d.children; d.children = null; }
   });
@@ -600,10 +599,9 @@ function initAzureMap(containerId = 'mapTree') {
     let n = d; while (n) { if (n.data.color) return n.data.color; n = n.parent; } return '#0078d4';
   }
 
-  // Vertical cubic bezier: source → target flowing top-to-bottom
   function diagonal(s, d) {
-    const my = (s.y + d.y) / 2;
-    return `M ${s.x} ${s.y} C ${s.x} ${my}, ${d.x} ${my}, ${d.x} ${d.y}`;
+    const mx = (s.y + d.y) / 2;
+    return `M ${s.y} ${s.x} C ${mx} ${s.x}, ${mx} ${d.x}, ${d.y} ${d.x}`;
   }
 
   function update(source) {
@@ -611,10 +609,9 @@ function initAzureMap(containerId = 'mapTree') {
     const nodes = treeData.descendants();
     const links  = treeData.links();
 
-    // x = horizontal (breadth), y = vertical (depth × level height)
-    nodes.forEach(d => { d.y = d.depth * LEVEL_H; });
+    // y = horizontal position (depth × col width), x = vertical position
+    nodes.forEach(d => { d.y = d.depth * COL_WIDTH; });
 
-    // ── Links ──
     const link = g.selectAll('.link')
       .data(links, d => d.target.id || (d.target.id = ++_uid));
 
@@ -625,24 +622,23 @@ function initAzureMap(containerId = 'mapTree') {
       .merge(link)
       .transition().duration(380)
       .attr('d', d => diagonal(d.source, d.target))
-      .attr('stroke', d => getColor(d.target) + '40');
+      .attr('stroke', d => getColor(d.target) + '35');
 
     link.exit().transition().duration(260)
       .attr('d', () => diagonal({ x: source.x, y: source.y }, { x: source.x, y: source.y }))
       .remove();
 
-    // ── Nodes ──
     const node = g.selectAll('.node')
       .data(nodes, d => d.id || (d.id = ++_uid));
 
     const nodeEnter = node.enter().append('g').attr('class', 'node')
-      .attr('transform', () => `translate(${source.x0 || 0},${source.y0 || 0})`)
+      .attr('transform', () => `translate(${source.y0 || 0},${source.x0 || 0})`)
       .style('cursor', 'pointer')
       .on('click', (event, d) => {
         event.stopPropagation();
         tooltip.style.opacity = '0';
-        if (d.children)        { d._children = d.children; d.children = null; }
-        else if (d._children)  { d.children = d._children; d._children = null; }
+        if (d.children)       { d._children = d.children; d.children = null; }
+        else if (d._children) { d.children = d._children; d._children = null; }
         update(d);
         showNodePopup(d, event.clientX, event.clientY);
       })
@@ -656,50 +652,39 @@ function initAzureMap(containerId = 'mapTree') {
       })
       .on('mouseout', () => { tooltip.style.opacity = '0'; });
 
-    const circleR = d => d.depth === 0 ? 12 : d.depth === 1 ? 8 : d._children ? 5 : 3;
     const truncate = (s, max) => s.length > max ? s.slice(0, max - 1) + '…' : s;
     const labelText = d => {
-      const max = d.depth === 0 ? 18 : d.depth === 1 ? 12 : 13;
+      const max = d.depth === 0 ? 30 : d.depth === 1 ? 24 : 28;
       return (d.data.icon ? d.data.icon + ' ' : '') + truncate(d.data.name, max);
     };
 
-    nodeEnter.append('circle')
-      .attr('r', 0)
-      .attr('stroke-width', d => d.depth === 0 ? 3 : 2);
+    nodeEnter.append('circle').attr('r', 0).attr('stroke-width', d => d.depth === 0 ? 3 : 2);
 
-    nodeEnter.append('rect')
-      .attr('class', 'label-bg')
-      .attr('rx', 3).attr('ry', 3)
-      .attr('opacity', 0)
-      .attr('pointer-events', 'none')
-      .attr('fill', '#05080f');
+    nodeEnter.append('rect').attr('class', 'label-bg')
+      .attr('rx', 4).attr('ry', 4).attr('opacity', 0)
+      .attr('pointer-events', 'none').attr('fill', '#05080f');
 
-    // Label below the circle for all nodes
-    nodeEnter.append('text')
-      .attr('class', 'label-text')
-      .attr('text-anchor', 'middle')
-      .attr('opacity', 0);
+    nodeEnter.append('text').attr('class', 'label-text').attr('dy', '0.32em').attr('opacity', 0);
 
-    nodeEnter.append('text')
-      .attr('class', 'node-ctrl')
-      .attr('dy', '0.32em')
+    nodeEnter.append('text').attr('class', 'node-ctrl').attr('dy', '0.32em')
       .style('font-size', '9px').style('pointer-events', 'none');
 
     const nodeUpdate = nodeEnter.merge(node);
 
     nodeUpdate.transition().duration(380)
-      .attr('transform', d => `translate(${d.x},${d.y})`);
+      .attr('transform', d => `translate(${d.y},${d.x})`);
 
     nodeUpdate.select('circle').transition().duration(380)
-      .attr('r', circleR)
+      .attr('r', d => d.depth === 0 ? 13 : d.depth === 1 ? 8 : d._children ? 6 : 4)
       .attr('fill', d => getColor(d) + (d._children ? '18' : '28'))
       .attr('stroke', d => getColor(d))
       .style('filter', d => `drop-shadow(0 0 ${d.depth <= 1 ? 7 : 3}px ${getColor(d)}55)`);
 
     nodeUpdate.select('.label-text').transition().duration(380)
-      .attr('y', d => circleR(d) + 13)
+      .attr('x', d => (d.children || d._children) ? -16 : 16)
+      .attr('text-anchor', d => (d.children || d._children) ? 'end' : 'start')
       .text(labelText)
-      .style('font-size', d => d.depth === 0 ? '13px' : d.depth === 1 ? '11px' : '9px')
+      .style('font-size', d => d.depth === 0 ? '14px' : d.depth === 1 ? '13px' : d.depth === 2 ? '11px' : '10px')
       .style('font-weight', d => d.depth <= 1 ? '700' : '400')
       .style('fill', d => d.depth === 0 ? '#e2e8f0' : d.depth === 1 ? getColor(d) : '#8892a4')
       .attr('opacity', 1);
@@ -723,7 +708,7 @@ function initAzureMap(containerId = 'mapTree') {
       .text(d => d._children ? '+' : '');
 
     const nodeExit = node.exit().transition().duration(260)
-      .attr('transform', () => `translate(${source.x},${source.y})`).remove();
+      .attr('transform', () => `translate(${source.y},${source.x})`).remove();
     nodeExit.select('circle').attr('r', 0);
     nodeExit.selectAll('text').attr('opacity', 0);
     nodeExit.select('.label-bg').attr('opacity', 0);
@@ -736,22 +721,18 @@ function initAzureMap(containerId = 'mapTree') {
 
   function fitView() {
     const b = g.node().getBBox();
-    if (!b.width) return;
+    if (!b.width) return null;
     const scaleX = (W - 60) / b.width;
-    const scaleY = (H - 80) / b.height;
-    const scale  = Math.min(scaleX, scaleY, 1.2);
-    const tx = W / 2 - (b.x + b.width  / 2) * scale;
-    const ty = 36    - b.y * scale;
-    return { tx, ty, scale };
+    const scaleY = (H - 40) / b.height;
+    const scale  = Math.min(scaleX, scaleY, 0.9);
+    return { tx: 40 - b.x * scale, ty: H / 2 - (b.y + b.height / 2) * scale, scale };
   }
 
-  // Auto-fit after first render
   setTimeout(() => {
     const f = fitView(); if (!f) return;
     svg.call(zoom.transform, d3.zoomIdentity.translate(f.tx, f.ty).scale(f.scale));
   }, 450);
 
-  // ── Controls ──
   const btnBase = 'background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--text-dim);border-radius:6px;cursor:pointer;font-family:inherit;transition:background 0.15s;';
   const ctrl = document.createElement('div');
   ctrl.className = 'map-zoom-ctrl';
@@ -779,7 +760,6 @@ function initAzureMap(containerId = 'mapTree') {
   container.style.position = 'relative';
   container.appendChild(ctrl);
 
-  // ── Map search (overlay only) ──
   if (containerId === 'mapTree') {
     document.getElementById('mapSearch')?.addEventListener('input', function () {
       const q = this.value.toLowerCase().trim();
@@ -787,14 +767,14 @@ function initAzureMap(containerId = 'mapTree') {
         g.selectAll('.label-text').attr('opacity', 1)
           .style('fill', d => d.depth === 0 ? '#e2e8f0' : d.depth === 1 ? getColor(d) : '#8892a4');
         g.selectAll('.label-bg').attr('opacity', 0.78);
-        g.selectAll('.link').attr('stroke', d => getColor(d.target) + '40');
+        g.selectAll('.link').attr('stroke', d => getColor(d.target) + '35');
         return;
       }
       const match = d => d.data.name.toLowerCase().includes(q) || (d.data.desc || '').toLowerCase().includes(q);
-      g.selectAll('.label-text').attr('opacity', d => match(d) ? 1 : 0.12)
+      g.selectAll('.label-text').attr('opacity', d => match(d) ? 1 : 0.15)
         .style('fill', d => match(d) ? '#ffffff' : '#444f62');
-      g.selectAll('.label-bg').attr('opacity', d => match(d) ? 0.9 : 0.2);
-      g.selectAll('.link').attr('stroke', d => match(d.target) ? getColor(d.target) + '80' : 'rgba(255,255,255,0.02)');
+      g.selectAll('.label-bg').attr('opacity', d => match(d) ? 0.9 : 0.3);
+      g.selectAll('.link').attr('stroke', d => match(d.target) ? getColor(d.target) + '80' : 'rgba(255,255,255,0.03)');
     });
   }
 }
