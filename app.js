@@ -613,8 +613,9 @@ function initAzureMap(containerId = 'mapTree') {
   let root = d3.hierarchy(window.AZURE_TREE);
   root.x0 = 0; root.y0 = 0;
 
+  // Start fully collapsed — user expands each category (Compute, Network, etc.) manually
   root.descendants().forEach(d => {
-    if (d.depth >= 2 && d.children) { d._children = d.children; d.children = null; }
+    if (d.depth >= 1 && d.children) { d._children = d.children; d.children = null; }
   });
 
   const tooltip = document.getElementById('tooltip');
