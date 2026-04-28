@@ -165,22 +165,33 @@ function navigate(route) {
 function renderHubSidebar() {
   const sb = document.getElementById('sidebarContent');
   if (!sb) return;
+  const levels    = ['Beginner','Intermediate','Advanced','Expert'];
+  const levelColors = { Beginner:'#22c55e', Intermediate:'#f97316', Advanced:'#8b5cf6', Expert:'#ef4444' };
+  const levelIcons  = { Beginner:'🌱', Intermediate:'⚡', Advanced:'🔥', Expert:'💎' };
+  const path = window.LEARNING_PATH || [];
   sb.innerHTML = `
     <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
       <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="openMap()">🗺️ Azure Service Map</button>
     </div>
-    <div style="padding:20px 16px;border-bottom:1px solid var(--border)">
-      <div style="font-size:22px;font-weight:900;background:linear-gradient(135deg,#50abf1,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Azure</div>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">Azure Study Guide</div>
-    </div>
-    <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:10px">EXAM PATHS</div>
-      ${Object.values(window.EXAMS || {}).map(e=>`
-        <div onclick="navigate('${e.meta.code.toLowerCase().replace('-','')}');" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:all 0.15s;margin-bottom:4px" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
-          <span style="font-size:16px">${e.meta.icon}</span>
-          <div><div style="font-size:12px;font-weight:700;color:${e.meta.color}">${e.meta.code}</div><div style="font-size:10px;color:var(--text-muted)">${e.meta.level}</div></div>
-        </div>`).join('')}
-    </div>`;
+    ${levels.map(level => {
+      const topics = path.filter(t => t.level === level);
+      if (!topics.length) return '';
+      return `
+        <div style="padding:10px 16px 4px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:${levelColors[level]}">
+            ${levelIcons[level]} ${level}
+          </div>
+        </div>
+        ${topics.map(t => `
+          <div onclick="navigate('${t.exam}/${t.domain}')"
+               style="display:flex;align-items:center;gap:9px;padding:6px 16px;cursor:pointer;transition:background 0.15s;"
+               onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+               onmouseout="this.style.background='transparent'">
+            <span style="font-size:14px;flex-shrink:0">${t.icon}</span>
+            <span style="font-size:12px;color:var(--text-dim);line-height:1.3">${t.title}</span>
+          </div>`).join('')}
+        <div style="height:6px"></div>`;
+    }).join('')}`;
 }
 
 function renderExamSidebar(exam, activeDomain, activeSection) {
@@ -255,53 +266,58 @@ function renderHub() {
   const pg = document.getElementById('pageContent');
   if (!pg) return;
 
-  const roleGroups = {
-    'Fundamentals': ['az900'],
-    'SRE / Platform Engineering': ['az104','az400'],
-    'Architecture': ['az305'],
-    'Security': ['az500'],
-    'Networking': ['az700']
+  const levels    = ['Beginner','Intermediate','Advanced','Expert'];
+  const levelMeta = {
+    Beginner:     { icon:'🌱', color:'#22c55e', hint:'No prior cloud knowledge needed' },
+    Intermediate: { icon:'⚡', color:'#f97316', hint:'Hands-on Azure administration' },
+    Advanced:     { icon:'🔥', color:'#8b5cf6', hint:'Architecture, DevOps and design' },
+    Expert:       { icon:'💎', color:'#ef4444', hint:'Security and advanced networking' },
   };
+  const path = window.LEARNING_PATH || [];
 
   pg.innerHTML = `
     <div class="hub-hero">
       <div class="hub-title"><span class="hub-grad">Azure</span><br>Azure Study Guide</div>
-      <p class="hub-desc">Comprehensive exam prep for 6 Azure certifications. Interactive flowcharts, service hierarchies, and 100+ practice questions.</p>
+      <p class="hub-desc">25 topics ordered from fundamentals to expert level. Start at the top and work your way down.</p>
       <div class="hub-cta">
-        <button class="btn btn-primary" onclick="navigate('az104')">⚙️ Start with AZ-104 Admin</button>
-        <button class="btn btn-secondary" onclick="openMap()">🗺️ Explore Azure Services Map</button>
+        <button class="btn btn-primary" onclick="navigate('az900/cloud-concepts')">🌱 Start from the Beginning</button>
+        <button class="btn btn-secondary" onclick="openMap()">🗺️ Azure Services Map</button>
       </div>
       <div class="hub-stats">
-        <div><div class="hub-stat-num">6</div><div class="hub-stat-label">Exams Covered</div></div>
+        <div><div class="hub-stat-num">25</div><div class="hub-stat-label">Topics</div></div>
+        <div><div class="hub-stat-num">4</div><div class="hub-stat-label">Levels</div></div>
+        <div><div class="hub-stat-num">200+</div><div class="hub-stat-label">Services Mapped</div></div>
         <div><div class="hub-stat-num">100+</div><div class="hub-stat-label">Practice Questions</div></div>
-        <div><div class="hub-stat-num">200+</div><div class="hub-stat-label">Azure Services Mapped</div></div>
-        <div><div class="hub-stat-num">AZ-900→AZ-700</div><div class="hub-stat-label">All Levels</div></div>
       </div>
     </div>
-    ${Object.entries(roleGroups).map(([role, examIds]) => `
-      <div class="hub-role-group">
-        <div class="hub-role-label">📂 ${role}</div>
-        <div class="grid g${Math.min(examIds.length,3)}">
-          ${examIds.map(id => {
-            const e = window.EXAMS?.[id];
-            if (!e) return '';
-            return `<div class="exam-card" onclick="navigate('${id}')" style="border-color:${e.meta.color}30">
-              <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${e.meta.color};border-radius:var(--radius) var(--radius) 0 0"></div>
-              <div class="exam-card-code" style="color:${e.meta.color}">${e.meta.icon} ${e.meta.code}</div>
-              <div class="exam-card-name">${e.meta.name}</div>
-              <div class="exam-card-tags">
-                <span class="exam-card-tag" style="border-color:${e.meta.color}40;color:${e.meta.color};background:${e.meta.color}15">${e.meta.level}</span>
-                <span class="exam-card-tag" style="border-color:var(--border);color:var(--text-dim)">${e.meta.duration}min</span>
-              </div>
-              <div class="exam-card-domains">${e.domains.map(d=>`${d.name} (${d.weight})`).join(' · ')}</div>
-              <div class="exam-card-footer">
-                <span>👥 ${e.meta.roles.slice(0,2).join(', ')}</span>
-                <span style="color:${e.meta.color}">Study →</span>
-              </div>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>`).join('')}`;
+    ${levels.map(level => {
+      const topics = path.filter(t => t.level === level);
+      if (!topics.length) return '';
+      const m = levelMeta[level];
+      return `
+        <div class="hub-role-group">
+          <div class="hub-role-label" style="color:${m.color};border-color:${m.color}30">
+            ${m.icon} ${level} <span style="font-weight:400;opacity:0.7;text-transform:none;letter-spacing:0">— ${m.hint}</span>
+          </div>
+          <div class="grid g3">
+            ${topics.map(t => `
+              <div class="topic-card card card-hover-lift" onclick="navigate('${t.exam}/${t.domain}')"
+                   style="cursor:pointer;border-color:${t.color}25;position:relative;overflow:hidden">
+                <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${t.color};border-radius:var(--radius) var(--radius) 0 0"></div>
+                <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
+                  <span style="font-size:24px;flex-shrink:0;margin-top:2px">${t.icon}</span>
+                  <div>
+                    <div style="font-size:15px;font-weight:700;color:${t.color};line-height:1.3">${t.title}</div>
+                    <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;
+                      background:${t.color}18;color:${t.color};border:1px solid ${t.color}35">${level}</span>
+                  </div>
+                </div>
+                <div style="font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:12px">${t.desc}</div>
+                <div style="font-size:13px;color:${t.color};font-weight:600">Study →</div>
+              </div>`).join('')}
+          </div>
+        </div>`;
+    }).join('')}`;
 }
 
 // ── Exam Overview ──────────────────────────────────────────────────────────────

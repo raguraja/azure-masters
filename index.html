@@ -18,15 +18,8 @@
     <span class="logo-text">Azure<br><small style="font-size:0.55em;font-weight:400;letter-spacing:0.05em;opacity:0.75;">by Ragu</small></span>
   </div>
   <nav class="exam-pills" id="examPills">
-    <button class="ep-btn ep-hub active" data-route="hub">🏠 Hub</button>
+    <button class="ep-btn ep-hub active" data-route="hub">🏠 Home</button>
     <button class="ep-btn ep-map" data-route="map">🗺️ Azure Map</button>
-    <div class="ep-div"></div>
-    <button class="ep-btn ep-az900" data-route="az900">AZ-900</button>
-    <button class="ep-btn ep-az104" data-route="az104">AZ-104</button>
-    <button class="ep-btn ep-az305" data-route="az305">AZ-305</button>
-    <button class="ep-btn ep-az400" data-route="az400">AZ-400</button>
-    <button class="ep-btn ep-az500" data-route="az500">AZ-500</button>
-    <button class="ep-btn ep-az700" data-route="az700">AZ-700</button>
   </nav>
   <div class="topbar-right" style="display:flex;align-items:center;gap:8px;">
     <button id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark mode" style="background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:5px 9px;cursor:pointer;font-size:15px;flex-shrink:0;line-height:1;">🌙</button>
@@ -74,6 +67,7 @@
 <div class="tooltip" id="tooltip"></div>
 
 <!-- Scripts: data first, then app -->
+<script src="data/topics.js"></script>
 <script src="data/azure-tree.js"></script>
 <script src="exams/az900.js"></script>
 <script src="exams/az104.js"></script>
