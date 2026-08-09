@@ -367,6 +367,12 @@ body.light .exam-dropdown { background: #ffffff; }
 body.light .rwe-toggle { background: rgba(0,120,212,0.08); border-color: rgba(0,120,212,0.3); color: #0078d4; }
 body.light .rwe-box { background: rgba(0,120,212,0.05); }
 
+/* ── Source-exam badge (secondary, shown on topic-browsed sections) ── */
+.exam-badge-pill { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; border: 1px solid; transition: opacity 0.15s; }
+.exam-badge-pill:hover { opacity: 0.8; }
+.sb-exam-tag { font-size: 9px; font-weight: 700; color: var(--text-muted); background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; margin-left: 6px; flex-shrink: 0; }
+body.light .sb-exam-tag { background: rgba(0,0,0,0.04); }
+
 /* ── Light Mode ── */
 body.light {
   --bg: #f0f4f8;

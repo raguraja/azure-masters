@@ -6,6 +6,7 @@ window.EXAMS.az900 = {
       id:'cloud-concepts', name:'Describe Cloud Concepts', weight:'25-30%', color:'#00d4ff',
       sections: [
         { id:'benefits', title:'Benefits of Cloud Computing', icon:'✅',
+          topic:'fundamentals',
           example: `A ticketing startup sells concert tickets. On a normal day they get 500 visitors, but when a superstar announces a reunion tour, 2 million people hit the site in one hour. Because they run on Azure, the app <strong>scales out automatically</strong> (elasticity) to handle the spike, then scales back down that night so they aren't paying for idle servers. If one server fails mid-sale, traffic reroutes instantly (high availability) and no customer notices. That's cloud computing's whole pitch in one afternoon.`,
           render: () => `
 <div class="section-desc">Cloud computing delivers IT resources over the internet with pay-as-you-go pricing. Understanding these core benefits is 20-25% of the AZ-900 exam.</div>
@@ -28,6 +29,7 @@ ${[
 </div>` },
 
         { id:'service-models', title:'IaaS / PaaS / SaaS & Shared Responsibility', icon:'🏗️',
+          topic:'fundamentals',
           example: `A small dev team launches a food-delivery app. If they rent Azure VMs (<strong>IaaS</strong>), they install and patch the OS themselves — like renting an empty apartment and buying your own furniture. If they use Azure App Service (<strong>PaaS</strong>), they just push code and Azure handles the OS and scaling — a furnished apartment where the landlord fixes the plumbing. If they use Microsoft 365 for email (<strong>SaaS</strong>), they just open a browser — a hotel room, everything provided. Same team, three levels of responsibility.`,
           render: () => `
 <div class="section-desc">The three cloud service models define who manages what. More control = more responsibility. The shared responsibility model is heavily tested on AZ-900.</div>
@@ -68,6 +70,7 @@ ${[
 </div>` },
 
         { id:'cloud-types', title:'Cloud Deployment Models', icon:'🌐',
+          topic:'fundamentals',
           example: `A bank modernizes its systems. Customer-facing apps (mobile banking, the marketing site) run in Azure's <strong>Public Cloud</strong> — no reason not to share infrastructure with everyone else. But core transaction records stay in a <strong>Private Cloud</strong> on the bank's own hardware because of strict regulations. The two are connected in a <strong>Hybrid Cloud</strong> setup, so the mobile app can securely call back to the private ledger. This is exactly why most large enterprises end up hybrid, not purely one or the other.`,
           render: () => `
 <div class="section-desc">There are three cloud deployment models, each with different tradeoffs between control, cost, and flexibility.</div>
@@ -88,6 +91,7 @@ ${[
       id:'azure-services', name:'Azure Architecture & Services', weight:'35-40%', color:'#50abf1',
       sections: [
         { id:'global-infra', title:'Global Infrastructure', icon:'🗺️',
+          topic:'fundamentals',
           example: `A retailer with customers in the US and Europe deploys its app in two <strong>Regions</strong> — East US and West Europe — so a shopper in Paris isn't waiting on a server in Virginia. Within East US, VMs spread across 3 <strong>Availability Zones</strong>, so if one datacenter loses power during a storm, the site stays up on the other two. East US is <strong>paired</strong> with West US, so if the whole East Coast region went dark, a copy of the data already exists on the other side of the country.`,
           render: () => `
 <div class="section-desc">Azure's global infrastructure consists of datacenters, availability zones, regions, and region pairs — each providing different levels of resilience.</div>
@@ -110,6 +114,7 @@ ${[
 </div>` },
 
         { id:'core-compute', title:'Core Compute Services', icon:'🖥️',
+          topic:'compute',
           example: `A photo-sharing startup needs to resize thumbnails whenever someone uploads a photo — a tiny, occasional task, so they use <strong>Azure Functions</strong> and pay only per upload. Their main website runs on <strong>Azure App Service</strong> so new code ships with a git push and nobody touches a server. Their data-science team trains models on raw <strong>VMs</strong> because they need full control of GPU drivers. Their new microservices platform runs on <strong>AKS</strong> so 40 small services scale independently. One company, four different compute choices.`,
           render: () => `
 <div class="section-desc">Azure compute services run your workloads — from raw VMs to fully managed serverless functions. Choosing the right service is a key AZ-900 topic.</div>
@@ -128,6 +133,7 @@ ${[
 </div>` },
 
         { id:'core-networking', title:'Core Networking Services', icon:'🌐',
+          topic:'networking',
           example: `An insurance company's 12 branch offices connect to Azure over a <strong>VPN Gateway</strong> (encrypted, over the internet), while headquarters uses <strong>ExpressRoute</strong> for a private, dedicated line since it carries the most traffic. Inside Azure, claims-processing VMs sit in a <strong>VNet</strong>, protected by a <strong>Network Security Group</strong> that only lets the web tier reach the database tier. The public website sits behind an <strong>Application Gateway</strong> with a Web Application Firewall to block malicious traffic before it reaches a server.`,
           render: () => `
 <div class="section-desc">Azure networking connects your resources to each other, to the internet, and to your on-premises environment.</div>
@@ -146,6 +152,7 @@ ${[
 </div>` },
 
         { id:'core-storage', title:'Storage & Database Services', icon:'💾',
+          topic:'storage',
           example: `A video-streaming app stores raw uploaded footage in Blob Storage's <strong>Hot tier</strong> while it's being edited, moves finished archives no one will rewatch to the <strong>Cool tier</strong>, and old raw footage kept only for legal reasons to the <strong>Archive tier</strong> — same data, three price points based on how often it's touched. Meanwhile, user profiles and watch history live in <strong>Cosmos DB</strong> because it needs near-instant reads for millions of users worldwide, no matter which country they're in.`,
           render: () => `
 <div class="section-desc">Azure storage services cover everything from simple object storage to globally distributed databases. Understanding when to use each is critical for AZ-900.</div>
@@ -179,6 +186,7 @@ ${[
 </div>` },
 
         { id:'ai-iot', title:'AI, IoT & Analytics Services', icon:'🤖',
+          topic:'ai-data',
           example: `A logistics company puts GPS and temperature sensors on 5,000 refrigerated trucks, streaming data into <strong>Azure IoT Hub</strong>. <strong>Azure Stream Analytics</strong> watches that stream in real time and fires an alert the instant a truck's temperature climbs too high, before the cargo spoils. Separately, the support team uses <strong>Azure AI Language</strong> to auto-detect angry customers in tickets and <strong>Azure AI Speech</strong> to transcribe call-center recordings — no data scientists required for either.`,
           render: () => `
 <div class="section-desc">Azure provides pre-built AI/ML APIs, IoT connectivity, and big data analytics services — no data science degree required. These are covered in AZ-900 Domain 2.</div>
@@ -229,6 +237,7 @@ ${[
       id:'management-governance', name:'Azure Management & Governance', weight:'30-35%', color:'#22c55e',
       sections: [
         { id:'identity-basics', title:'Azure AD & Identity', icon:'👤',
+          topic:'identity',
           example: `A consulting firm's employees sign into Microsoft 365, the VPN, and internal apps with one Azure AD login protected by <strong>MFA</strong> — so a leaked password alone isn't enough to get in, an attacker still needs the employee's phone. Contractors from a partner company are invited as <strong>B2B guest</strong> users with their own company credentials instead of getting new accounts issued. A nightly file-copy job authenticates with a <strong>Managed Identity</strong>, so no password is ever stored in the script.`,
           render: () => `
 <div class="section-desc">Azure Active Directory (now Microsoft Entra ID) is the cloud identity platform. Every Azure account uses it. It is NOT the same as Windows Server Active Directory.</div>
@@ -265,6 +274,7 @@ ${[
 </div>` },
 
         { id:'governance-tools', title:'Governance & Compliance Tools', icon:'⚖️',
+          topic:'governance',
           example: `A hospital IT team uses <strong>Azure Policy</strong> to automatically block anyone from creating an unencrypted storage account — the deployment fails before it happens, even for an admin. They put a <strong>ReadOnly lock</strong> on the patient-records database so no one can accidentally change its configuration during routine cleanup. Every resource is <strong>tagged</strong> Department=Cardiology or Department=Radiology so finance can see exactly which department is driving the Azure bill.`,
           render: () => `
 <div class="section-desc">Azure governance tools enforce organizational standards, track compliance, and prevent unauthorized resource usage.</div>
@@ -280,6 +290,7 @@ ${[
 </div>` },
 
         { id:'security-tools', title:'Security & Privacy Tools', icon:'🔒',
+          topic:'security',
           example: `An e-commerce company gets an alert from <strong>Defender for Cloud</strong> that a VM is missing patches, dragging down its Secure Score. The checkout database password isn't in the code at all — it's fetched at runtime from <strong>Key Vault</strong>. When a botnet tries to overwhelm the site on Black Friday, <strong>DDoS Protection</strong> absorbs the flood automatically. When an analyst investigates a suspicious login, <strong>Microsoft Sentinel</strong> has already correlated it with other unusual activity and opened an incident.`,
           render: () => `
 <div class="section-desc">Azure provides a comprehensive set of security tools to protect your workloads. Understanding each tool's purpose is key for AZ-900.</div>
@@ -302,6 +313,7 @@ ${[
 </div>` },
 
         { id:'cost-tools', title:'Cost Management & SLA', icon:'💰',
+          topic:'governance',
           example: `A startup's finance lead uses the <strong>Pricing Calculator</strong> to estimate a new app's cost before deploying a single resource, so it fits next quarter's budget. Once live, <strong>Cost Management</strong> alerts them at 80% of the monthly budget. A batch job that can tolerate interruptions gets switched to <strong>Spot VMs</strong>, cutting that line item by 80%. And because a feature is still in <strong>Preview</strong>, they know not to rely on it for anything customer-facing — preview services carry no SLA.`,
           render: () => `
 <div class="section-desc">Azure cost management tools help you estimate, monitor, and optimize spending. SLA knowledge is essential for designing reliable systems.</div>
@@ -322,6 +334,7 @@ ${[
 </div>` },
 
         { id:'mgmt-tools', title:'Azure Management Tools', icon:'🛠️',
+          topic:'management',
           example: `A platform engineer manages 200 VMs across three regions. Instead of clicking through the <strong>Portal</strong> 200 times, she writes an <strong>ARM template</strong> describing the desired end state and deploys it with one <strong>CLI</strong> command — repeatable and safe to re-run. Some servers still run in an on-premises data center, so she connects them via <strong>Azure Arc</strong>: they now show up in the same portal dashboard, follow the same Azure Policy rules, and trigger the same Azure Monitor alerts as everything else.`,
           render: () => `
 <div class="section-desc">Azure provides multiple ways to manage resources: GUI, CLI, APIs, and automation tools. All management operations go through Azure Resource Manager (ARM).</div>

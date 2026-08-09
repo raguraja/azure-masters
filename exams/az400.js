@@ -6,6 +6,7 @@ window.EXAMS.az400 = {
       id:'processes', name:'Configure Processes & Communications', weight:'10-15%', color:'#ec4899',
       sections: [
         { id:'azure-boards', title:'Azure Boards & Agile Planning', icon:'📋',
+          topic:'devops',
           example: `A 12-person product team is drowning in Slack threads trying to track who owns what for the big Q3 release. They move planning into <strong>Azure Boards</strong>, breaking the release into an Epic, then Features, then User Stories that map onto two-week sprints on the Sprint Board. When a developer pushes a commit with "AB#482" in the message, it automatically links to the User Story and updates its state, so no one has to manually chase status. Now the Product Owner opens the sprint dashboard on Monday morning and can see burndown, velocity, and exactly which stories are blocked without pinging a single engineer.`,
           render: () => `
 <div class="section-desc">Azure Boards provides Agile project management — work items, sprints, backlogs, and dashboards. This is the "plan" part of the DevOps lifecycle.</div>
@@ -87,6 +88,7 @@ window.EXAMS.az400 = {
       id:'source-control', name:'Design & Implement Source Control', weight:'15-20%', color:'#14b8a6',
       sections: [
         { id:'git-strategy', title:'Git Branching Strategies', icon:'🌿',
+          topic:'devops',
           example: `A 40-developer SaaS team used to work off one shared branch and constantly stepped on each other's changes, with merge conflicts eating a full day before every release. They switch to <strong>GitHub Flow</strong>: every change gets a short-lived feature branch, a pull request with required reviewers, and <strong>branch policies</strong> that block merging to main until CI passes. A junior dev accidentally tries to push straight to main with a broken build, and the branch policy rejects it outright, so the bug never reaches production. Six months later they're deploying multiple times a day instead of once every two weeks, because integration pain simply disappeared.`,
           render: () => `
 <div class="section-desc">Branching strategy directly impacts release velocity, team collaboration, and production stability. Choose based on team size and release cadence.</div>
@@ -120,6 +122,7 @@ window.EXAMS.az400 = {
 </div>` },
 
         { id:'github-actions', title:'GitHub Actions vs Azure Pipelines', icon:'🐙',
+          topic:'devops',
           example: `A startup's engineering team lives entirely in GitHub, issues, code review, and now they want CI/CD too, without paying for a separate tool. They wire up <strong>GitHub Actions</strong> using the huge marketplace of pre-built actions and azure/login with OIDC to deploy straight to Azure with no stored credentials. Later they acquire a larger enterprise customer's internal tooling team, who already run <strong>Azure Pipelines</strong> with strict approval gates and VMSS self-hosted agents for compliance reasons, and the two teams realize both pipelines can coexist, each suited to its own repo's needs. Picking the right tool up front saves them from a painful mid-project migration.`,
           render: () => `
 <div class="section-desc">Both GitHub Actions and Azure Pipelines provide CI/CD automation, but they have different strengths. Understanding which to use for which scenario is tested in AZ-400.</div>
@@ -171,6 +174,7 @@ window.EXAMS.az400 = {
       id:'pipelines', name:'Build & Release Pipelines', weight:'40-45%', color:'#0078d4',
       sections: [
         { id:'yaml-pipelines', title:'Azure Pipelines (YAML)', icon:'⚙️',
+          topic:'devops',
           example: `An engineering team's build config used to live only in the Classic UI editor, and nobody could tell what changed between releases after a departing team lead took the tribal knowledge with him. They rewrite it as a <strong>YAML pipeline</strong> checked into the repo: a Build stage that compiles and tests, followed by a Deploy stage gated by an <strong>environment approval check</strong> so nothing reaches Production without a human sign-off. When a stage fails, dependsOn and the default succeeded() condition automatically stop the Deploy stage from running, so a broken build can never accidentally ship. Now every pipeline change goes through the same pull request review as application code, and rolling back a bad pipeline edit is just a git revert.`,
           render: () => `
 <div class="section-desc">YAML pipelines are the modern way to define CI/CD in code (Pipeline as Code). Stored in your repo, versioned with your code.</div>
@@ -257,6 +261,7 @@ window.EXAMS.az400 = {
 </div>` },
 
         { id:'iac', title:'Infrastructure as Code', icon:'📋',
+          topic:'devops',
           example: `An ops team used to spin up new environments by clicking through the Azure Portal, and no two environments ever ended up quite the same, one was missing a firewall rule, another had the wrong SKU. They rewrite their infrastructure as <strong>Bicep</strong> templates checked into source control, and add a what-if step to the pipeline so every pull request shows exactly which resources will change before anything is applied. A reviewer catches that a proposed change would accidentally downgrade the production App Service Plan, and blocks the merge. Now every environment, dev, staging, production, is deployed from the exact same template, and standing up a new region takes minutes instead of a week of manual clicking.`,
           render: () => `
 <div class="section-desc">IaC treats infrastructure like software — versioned, tested, repeatable deployments. Azure supports ARM Templates, Bicep, and Terraform.</div>
@@ -310,6 +315,7 @@ window.EXAMS.az400 = {
 </div>` },
 
         { id:'container-ci', title:'Container CI/CD & GitOps', icon:'🐳',
+          topic:'devops',
           example: `A platform team deploying to AKS used to have engineers run kubectl apply from their laptops, and twice a rogue local change silently drifted the cluster out of sync with what was actually reviewed and tested. They move to <strong>GitOps</strong> with Flux: the CI pipeline builds, scans with Trivy, and pushes an image to <strong>Azure Container Registry</strong>, then just updates a Git repo with the new image tag, and the in-cluster operator pulls that change itself, so CI never holds cluster credentials. They also switch from an all-at-once rollout to a <strong>canary deployment</strong>, routing 5% of traffic to the new version first. When a bad image slips past the scanner, the canary's error rate spikes immediately, the rollout halts automatically, and 95% of users never noticed anything happened.`,
           render: () => `
 <div class="section-desc">Modern SRE/DevOps uses containers and Kubernetes. CI/CD must handle image building, scanning, pushing, and deploying to AKS.</div>
@@ -345,6 +351,7 @@ window.EXAMS.az400 = {
   </div>
 </div>` }
         ,{ id:'load-testing-rings', title:'Azure Load Testing & Deployment Rings', icon:'🚀',
+          topic:'devops',
           example: `A retailer's checkout service passed every functional test but fell over during last year's Black Friday sale under real traffic. This year they add <strong>Azure Load Testing</strong> as a pipeline gate before every production deploy, failing the build automatically if p99 latency exceeds 500ms under simulated load. They also roll out the new checkout flow through <strong>deployment rings</strong>, internal engineers first, then 5% of opted-in customers for 48 hours, then general availability, so if something's still wrong, only a tiny slice of shoppers ever sees it. When Ring 1 shows a memory leak under sustained load that the load test missed, they catch it and roll back before a single paying customer is affected on the big day.`,
           render: () => `
 <div class="section-desc">Performance testing in pipelines and progressive deployment patterns are key DevOps practices. Azure Load Testing integrates load tests into your CI/CD; deployment rings reduce blast radius of bad releases.</div>
@@ -397,6 +404,7 @@ window.EXAMS.az400 = {
       id:'security-pipelines', name:'Security & Compliance in Pipelines', weight:'10-15%', color:'#ef4444',
       sections: [
         { id:'devsecops', title:'DevSecOps & Shift Left', icon:'🔒',
+          topic:'devops',
           example: `A fintech team once didn't discover a hardcoded API key in their codebase until it turned up on a public GitHub search, because their only security review happened during a yearly audit long after the code shipped. They shift security left: <strong>SAST</strong> scanning (CodeQL) runs on every commit to catch injection flaws, <strong>secret scanning</strong> blocks any push containing credentials, and a <strong>container scanning</strong> step fails the build if a Docker image has a critical CVE. A developer accidentally commits a database connection string in a config file, and the pipeline rejects the push within seconds, long before it ever reaches a branch anyone could clone. What used to be a post-incident scramble is now a five-second red X in the pull request.`,
           render: () => `
 <div class="section-desc">Shift Left = move security earlier in the SDLC. Don't scan in production — catch vulnerabilities during development and CI.</div>
@@ -437,6 +445,7 @@ window.EXAMS.az400 = {
       id:'monitoring-feedback', name:'Instrumentation & Monitoring', weight:'10-15%', color:'#eab308',
       sections: [
         { id:'sre-monitoring', title:'SRE Observability', icon:'📊',
+          topic:'devops',
           example: `An SRE team kept getting paged for tiny latency blips that nobody actually cared about, while genuine reliability problems slipped through unnoticed. They define a concrete <strong>SLI</strong>, percentage of requests under 200ms, set an internal <strong>SLO</strong> of 99.9%, and calculate their <strong>error budget</strong> at 43 minutes of allowed downtime per month. When a risky new feature burns through half the month's error budget in a single bad deploy, the team stops shipping new features and spends the next sprint purely on reliability work instead, exactly as the error-budget policy dictates. The result is that alerts now mean something, and the team spends effort where it actually protects the SLA they promised customers.`,
           render: () => `
 <div class="section-desc">SRE monitoring goes beyond "is it up?" to measuring service reliability through SLIs, SLOs, and error budgets.</div>
@@ -472,6 +481,7 @@ window.EXAMS.az400 = {
 </div>` },
 
         { id:'appinsights-devops', title:'Application Insights & Database DevOps', icon:'📊',
+          topic:'devops',
           example: `A team once deployed a schema change and a code change together, only to watch error rates spike in <strong>Application Insights</strong> minutes later with no way to tell which change caused it, and no way to safely roll back the database. They fix the release process two ways: first, a <strong>continuous monitoring gate</strong> now blocks promotion to production if App Insights shows elevated errors in staging after a deploy; second, database changes now use the <strong>Expand/Contract</strong> pattern, add the new column, deploy code that works with both, migrate data, and only remove the old column in a later release. The next time a bad deploy does slip through, Application Insights' deployment markers pinpoint the exact release that caused the error spike, and because the schema change was additive, rolling back the application code alone is enough, no risky database rollback required.`,
           render: () => `
 <div class="section-desc">Continuous monitoring with Application Insights closes the DevOps loop. Database DevOps handles schema changes safely in CI/CD pipelines.</div>

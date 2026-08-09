@@ -6,6 +6,7 @@ window.EXAMS.az305 = {
       id:'identity-governance-monitoring', name:'Identity, Governance & Monitoring', weight:'25-30%', color:'#7c4dff',
       sections: [
         { id:'governance-design', title:'Governance at Scale', icon:'⚖️',
+          topic:'governance',
           example: `An architect joins a bank that just acquired three smaller fintechs, each with its own sprawl of Azure subscriptions and no shared rules. Instead of writing policy by hand in every subscription, the architect designs a <strong>Management Group</strong> hierarchy — one branch per acquired company, feeding up into a central "Regulated" branch — and assigns Azure Policy once at that branch so encryption and region restrictions inherit down automatically. Rather than build the encryption, networking, and identity baseline from scratch for each new subscription, the team adopts the <strong>Cloud Adoption Framework</strong> and deploys an <strong>Azure Landing Zone</strong> so every new subscription lands already compliant. Six months later, when regulators audit the merged bank, the architect can point to one policy assignment instead of forty inconsistent ones.`,
           render: () => `
 <div class="section-desc">Enterprise governance requires a hierarchy that scales with the organization. The Azure Landing Zone (CAF) model is the gold standard for enterprise Azure adoption.</div>
@@ -38,6 +39,7 @@ window.EXAMS.az305 = {
   </div>
 </div>` },
         { id:'logging-design', title:'Monitoring Architecture', icon:'📡',
+          topic:'monitoring',
           example: `An architect designing observability for a healthcare company has to decide between one giant <strong>Log Analytics Workspace</strong> for everything or splitting logs by environment and sensitivity. Dumping security audit logs into the same workspace as noisy application debug logs means the SOC team either sees too much irrelevant data or, worse, gets broad read access to logs they shouldn't touch. So the architect chooses a hybrid design: a dedicated security workspace feeding <strong>Microsoft Sentinel</strong> with locked-down access for the SOC, and a separate operational workspace for app teams debugging performance with <strong>Application Insights</strong>. When an auditor later asks "who could see patient system access logs," the answer is a short, defensible list instead of "everyone with contributor access."`,
           render: () => `
 <div class="section-desc">At enterprise scale, you need a deliberate logging strategy: where do logs go, how long are they kept, who can access them?</div>
@@ -61,6 +63,7 @@ window.EXAMS.az305 = {
 </div>`},
 
         { id:'identity-design', title:'Hybrid Identity & B2B/B2C Design', icon:'👥',
+          topic:'identity',
           example: `An architect designing identity for a manufacturer with an on-premises Active Directory has to pick how passwords get validated in Azure. Pass-Through Authentication would keep every login dependent on an on-prem server staying online, so if the datacenter loses power, nobody can sign into Microsoft 365 either. Instead the architect chooses <strong>Password Hash Sync</strong>, which lets Azure AD validate logins on its own even if on-premises AD is completely down — trading a small amount of control for real resilience. For the dozen external auditors who need temporary access, the architect uses <strong>Azure AD B2B</strong> guest invitations instead of creating internal accounts, and for the company's new customer-facing app, a separate <strong>Azure AD B2C</strong> tenant handles millions of shoppers signing in with Google or a local account. Three different identity problems, three deliberately different solutions.`,
           render: () => `
 <div class="section-desc">Identity architecture is the cornerstone of every Azure solution. The architect must choose between cloud-only, hybrid, and external identity patterns based on organizational requirements.</div>
@@ -115,6 +118,7 @@ window.EXAMS.az305 = {
 </div>` },
 
         { id:'cost-optimization-design', title:'Cost Optimization Design Patterns', icon:'💰',
+          topic:'governance',
           example: `An architect is asked to cut a struggling startup's Azure bill in half without hurting the product. The tempting shortcut is to buy <strong>Reserved Instances</strong> on the existing VMs immediately, but the architect resists — most of those VMs are oversized because nobody ever right-sized them, so reserving now would just lock in three years of waste at a discount. Instead the architect runs Azure Advisor first, right-sizes and deletes idle disks and orphaned public IPs, moves the nightly batch job to <strong>Spot VMs</strong>, and switches the rarely-used internal admin tool to <strong>Azure Functions</strong> so it costs nothing when idle. Only after all that does the team reserve capacity for the now-correctly-sized production fleet — and the bill drops 55%, more than the CFO asked for.`,
           render: () => `
 <div class="section-desc">Architects must design for cost efficiency from day one. Cost optimization is a Well-Architected Framework pillar — balance cost vs. other pillars based on workload requirements.</div>
@@ -154,6 +158,7 @@ window.EXAMS.az305 = {
       id:'data-storage', name:'Design Data Storage', weight:'20-25%', color:'#8b5cf6',
       sections: [
         { id:'storage-decisions', title:'Storage Decision Framework', icon:'🗄️',
+          topic:'storage',
           example: `An architect designing a flash-sale e-commerce platform has to choose between <strong>Azure SQL Database</strong> and <strong>Cosmos DB</strong> for the shopping cart, and the decision comes down to consistency versus scale. Cosmos DB with Strong consistency would guarantee every read sees the latest cart state, but that kills throughput exactly when the site needs it most, during the sale. So the architect picks Cosmos DB's <strong>Session consistency</strong> instead — each shopper reliably sees their own writes instantly, while the system tolerates tiny staleness between different shoppers' sessions, which nobody notices. The tradeoff pays off during the sale: the cart service absorbs 50x normal traffic without a single dropped checkout, because the architect chose the consistency level the workload actually needed instead of the strongest one available.`,
           render: () => `
 <div class="section-desc">The right storage choice depends on: data structure, access patterns, consistency requirements, scale, and cost.</div>
@@ -204,6 +209,7 @@ window.EXAMS.az305 = {
 </div>` },
 
         { id:'data-integration', title:'Data Integration & API Design Patterns', icon:'🔗',
+          topic:'storage',
           example: `An architect designing a logistics platform has to route three very different data problems and knows using one messaging service for all of them would be a mistake. Order confirmations must never be lost or processed twice, so those go through <strong>Azure Service Bus</strong> with guaranteed delivery and dead-lettering. GPS pings from 10,000 delivery trucks arrive constantly and can tolerate the occasional dropped packet, so that firehose goes through <strong>Azure Event Hubs</strong> instead, which is built for volume, not guarantees. Finally, when a new shipment label is uploaded to Blob Storage, that should just fire a lightweight notification, so <strong>Azure Event Grid</strong> handles it. Later, when partner carriers need API access to tracking data, the architect fronts everything with <strong>Azure API Management</strong> so partners get rate limits and API keys instead of direct access to internal services — three data problems, three matched tools, one clean gateway.`,
           render: () => `
 <div class="section-desc">Enterprise solutions require data integration between services and well-designed APIs. AZ-305 tests your ability to choose the right integration pattern.</div>
@@ -243,6 +249,7 @@ window.EXAMS.az305 = {
       id:'business-continuity', name:'Design Business Continuity', weight:'15-20%', color:'#22c55e',
       sections: [
         { id:'ha-dr', title:'High Availability & Disaster Recovery', icon:'🔄',
+          topic:'monitoring',
           example: `An architect is designing disaster recovery for two systems at an airline: the flight-booking website and an internal HR reporting tool. The booking site can't tolerate more than seconds of downtime or data loss during a regional outage, so the architect commits to expensive <strong>active-active multi-region</strong> deployment, effectively paying double to run in two regions simultaneously. The HR tool, by contrast, only needs to survive a disaster within a business day, so the architect saves the company real money by choosing cheap <strong>backup and restore</strong> instead. When it comes time to actually move the HR system's old on-prem SQL Server into that plan, the architect uses the <strong>Rehost</strong> ("lift and shift") strategy rather than rearchitecting it, since the goal is fast migration, not modernization. Matching RTO/RPO targets and migration effort to what each system actually needs — not applying the same expensive pattern everywhere — is what keeps the DR budget defensible.`,
           render: () => `
 <div class="section-desc">Business continuity requires defining RTO/RPO targets first, then selecting services that can meet those targets.</div>
@@ -276,6 +283,7 @@ window.EXAMS.az305 = {
       id:'infrastructure', name:'Design Infrastructure Solutions', weight:'30-35%', color:'#3b82f6',
       sections: [
         { id:'compute-design', title:'Compute Design Decisions', icon:'🖥️',
+          topic:'compute',
           example: `An architect designing a new media platform for a broadcaster has to pick compute for two very different pieces. The video transcoding service needs full control over GPU drivers and codecs, so it runs on <strong>Azure VMs</strong> despite the extra patching burden. The public-facing API in front of it just needs to accept requests and scale with viewership spikes during live events, so the architect puts it on <strong>App Service</strong> instead, trading OS-level control for a git-push deploy and automatic scaling. Networking-wise, the architect places both behind a <strong>hub-spoke topology</strong>, with a shared Azure Firewall in the hub, so a new "clips" microservice spoke can be added later without redesigning security from scratch. Six months on, adding that new spoke takes an afternoon instead of a network redesign project.`,
           render: () => `
 <div class="section-desc">Choosing the right compute is the most impactful architectural decision. Consider: control needed, scale requirements, DevOps maturity, cost profile.</div>
@@ -328,6 +336,7 @@ window.EXAMS.az305 = {
 </div>` },
 
         { id:'waf', title:'Well-Architected Framework', icon:'⚖️',
+          topic:'architecture',
           example: `An architect proposing a new claims-processing system for an insurer has to defend tradeoffs across the five WAF pillars, not just pick the "best" option. Adding <strong>geo-replication</strong> and multi-zone VMs improves Reliability, but the CFO immediately asks why the bill went up — that's the Cost Optimization pillar pulling in the opposite direction. Requiring <strong>Private Endpoints</strong> and mandatory MFA strengthens Security, but the UX team complains logins now take an extra step, a direct tension with convenience. The architect resolves it by mapping each decision explicitly to a pillar in the design doc: "this redundancy is justified because claims data loss triggers regulatory fines, this cost is accepted because downtime costs more per hour than the redundant replica." That explicit tradeoff language is what gets the design approved instead of endlessly re-litigated.`,
           render: () => `
 <div class="section-desc">The Azure Well-Architected Framework (WAF) provides 5 pillars for designing high-quality cloud solutions. Every AZ-305 architecture question is evaluated against these pillars.</div>
@@ -353,6 +362,7 @@ window.EXAMS.az305 = {
 </div>` },
 
         { id:'app-patterns', title:'Application Architecture Patterns', icon:'🏗️',
+          topic:'architecture',
           example: `An architect at a five-person startup is tempted to design a fashionable <strong>microservices</strong> architecture on AKS from day one, but pumps the brakes — five engineers can't realistically operate twenty independently deployed services, so the team ships a well-structured <strong>monolith</strong> on App Service instead and plans to split it later if it succeeds. Two years and forty engineers later, the product catalog gets read a thousand times for every one write, so the architect finally does split it out using <strong>CQRS</strong>, sending reads to a fast Cosmos DB store while writes still go through the transactional SQL database. When that catalog service starts timing out under load, the architect adds a <strong>Circuit Breaker</strong> in front of it so a failing dependency degrades gracefully instead of taking down checkout with it. The pattern only got adopted once the scale actually demanded it — not because it looked impressive in a diagram.`,
           render: () => `
 <div class="section-desc">Understanding when to apply different architecture patterns is core to the AZ-305 exam. The right pattern depends on workload characteristics, team size, and scale requirements.</div>

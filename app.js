@@ -5,6 +5,7 @@ let currentRoute = 'hub';
 let currentExam = null;
 let currentDomain = null;
 let currentSection = null;
+let currentTopic = null;
 let quizState = {};
 const visited = JSON.parse(localStorage.getItem('az-visited') || '{}');
 
@@ -124,21 +125,28 @@ const CHEAT_FACTS = {
 
 // ── Router ─────────────────────────────────────────────────────────────────────
 function navigate(route) {
-  // route formats: 'hub', 'map', 'az104', 'az104/identity', 'az104/identity/azure-ad', 'az104/quiz'
+  // route formats: 'hub', 'map', 'topic/<id>', 'az104', 'az104/identity', 'az104/identity/azure-ad', 'az104/quiz'
   currentRoute = route;
   const parts = route.split('/');
-  const examId = parts[0];
-  const domainId = parts[1];
-  const sectionId = parts[2];
 
   // Update exam pills
   document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('active'));
-  const activeBtn = document.querySelector(`[data-route="${examId}"]`);
+  const activeBtn = document.querySelector(`[data-route="${parts[0]}"]`);
   if (activeBtn) activeBtn.classList.add('active');
 
-  if (route === 'hub') { renderHub(); renderHubSidebar(); return; }
+  if (route === 'hub') { currentTopic = null; renderHub(); renderHubSidebar(); return; }
   if (route === 'map') { renderHub(); renderHubSidebar(); openMap(); return; }
 
+  if (parts[0] === 'topic') {
+    const topicId = parts[1];
+    currentTopic = topicId;
+    renderTopicSidebar(topicId, null);
+    renderTopicPage(topicId);
+    window.scrollTo(0, 0);
+    return;
+  }
+
+  const examId = parts[0], domainId = parts[1], sectionId = parts[2];
   const exam = window.EXAMS?.[examId];
   if (!exam) { renderHub(); return; }
 
@@ -146,7 +154,15 @@ function navigate(route) {
   currentDomain = domainId || null;
   currentSection = sectionId || null;
 
-  renderExamSidebar(exam, domainId, sectionId);
+  const sectionObj = (domainId && sectionId) ? exam.domains.find(d => d.id === domainId)?.sections.find(s => s.id === sectionId) : null;
+  const inTopicMode = currentTopic && sectionObj && sectionObj.topic === currentTopic;
+
+  if (inTopicMode) {
+    renderTopicSidebar(currentTopic, `${examId}/${domainId}/${sectionId}`);
+  } else {
+    currentTopic = null;
+    renderExamSidebar(exam, domainId, sectionId);
+  }
 
   if (domainId === 'quiz') {
     renderQuizPage(exam);
@@ -161,37 +177,114 @@ function navigate(route) {
   window.scrollTo(0, 0);
 }
 
+function navigateFromTopic(topicId, examId, domainId, sectionId) {
+  currentTopic = topicId;
+  navigate(`${examId}/${domainId}/${sectionId}`);
+}
+
+// ── Topic Index ────────────────────────────────────────────────────────────────
+let _topicIndexCache = null;
+function buildTopicIndex() {
+  if (_topicIndexCache) return _topicIndexCache;
+  const idx = {};
+  Object.entries(window.EXAMS || {}).forEach(([examId, exam]) => {
+    exam.domains.forEach(domain => {
+      domain.sections.forEach(sec => {
+        if (!sec.topic) return;
+        (idx[sec.topic] = idx[sec.topic] || []).push({ examId, exam, domainId: domain.id, domain, sectionId: sec.id, section: sec });
+      });
+    });
+  });
+  Object.values(idx).forEach(list => list.sort((a, b) => (window.EXAM_LEVEL[a.examId]?.order || 9) - (window.EXAM_LEVEL[b.examId]?.order || 9)));
+  _topicIndexCache = idx;
+  return idx;
+}
+
+function renderTopicPage(topicId) {
+  const topic = (window.TOPICS || []).find(t => t.id === topicId);
+  const pg = document.getElementById('pageContent');
+  if (!topic || !pg) { renderHub(); return; }
+  const items = buildTopicIndex()[topicId] || [];
+  pg.innerHTML = `
+    <div style="margin-bottom:32px">
+      ${breadcrumb([{ label: '🏠 Home', route: 'hub' }, { label: topic.name }])}
+      <div class="section-tag" style="border-color:${topic.color}40;color:${topic.color};background:${topic.color}15">${items.length} sections · Beginner → Expert</div>
+      <h1 class="section-title">${topic.icon} ${topic.name}</h1>
+      <p class="section-desc">${topic.desc}</p>
+    </div>
+    <div class="grid g3">
+      ${items.map(it => {
+        const key = `${it.examId}/${it.domainId}/${it.sectionId}`;
+        const isVisited = !!visited[key];
+        const lvl = window.EXAM_LEVEL[it.examId] || { label: '', order: 0 };
+        return `<div class="card card-hover-lift" onclick="navigateFromTopic('${topicId}','${it.examId}','${it.domainId}','${it.sectionId}')" style="cursor:pointer;border-color:${isVisited ? topic.color + '40' : 'var(--border)'}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+            <div style="font-size:24px">${it.section.icon}</div>
+            <span class="exam-badge-pill" style="color:${it.exam.meta.color};border-color:${it.exam.meta.color}40;background:${it.exam.meta.color}15">${it.exam.meta.code}</span>
+          </div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:6px">${it.section.title}</div>
+          <div style="font-size:10px;color:var(--text-muted)">${lvl.label}${isVisited ? ' · ✓ Visited' : ''}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
 // ── Sidebar ────────────────────────────────────────────────────────────────────
 function renderHubSidebar() {
   const sb = document.getElementById('sidebarContent');
   if (!sb) return;
-  const levels    = ['Beginner','Intermediate','Advanced','Expert'];
-  const levelColors = { Beginner:'#22c55e', Intermediate:'#f97316', Advanced:'#8b5cf6', Expert:'#ef4444' };
-  const levelIcons  = { Beginner:'🌱', Intermediate:'⚡', Advanced:'🔥', Expert:'💎' };
-  const path = window.LEARNING_PATH || [];
+  const topics = window.TOPICS || [];
+  const idx = buildTopicIndex();
   sb.innerHTML = `
     <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
       <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="openMap()">🗺️ Azure Service Map</button>
     </div>
-    ${levels.map(level => {
-      const topics = path.filter(t => t.level === level);
-      if (!topics.length) return '';
-      return `
-        <div style="padding:10px 16px 4px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:${levelColors[level]}">
-            ${levelIcons[level]} ${level}
-          </div>
-        </div>
-        ${topics.map(t => `
-          <div onclick="navigate('${t.exam}/${t.domain}')"
-               style="display:flex;align-items:center;gap:9px;padding:6px 16px;cursor:pointer;transition:background 0.15s;"
-               onmouseover="this.style.background='rgba(255,255,255,0.04)'"
-               onmouseout="this.style.background='transparent'">
-            <span style="font-size:14px;flex-shrink:0">${t.icon}</span>
-            <span style="font-size:12px;color:var(--text-dim);line-height:1.3">${t.title}</span>
-          </div>`).join('')}
-        <div style="height:6px"></div>`;
-    }).join('')}`;
+    <div class="sb-section-label">TOPICS</div>
+    ${topics.map(t => `
+      <div onclick="navigate('topic/${t.id}')"
+           style="display:flex;align-items:center;gap:9px;padding:7px 16px;cursor:pointer;transition:background 0.15s;"
+           onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+           onmouseout="this.style.background='transparent'">
+        <span style="font-size:14px;flex-shrink:0">${t.icon}</span>
+        <span style="font-size:12px;color:var(--text-dim);line-height:1.3;flex:1">${t.name}</span>
+        <span style="font-size:10px;color:var(--text-muted)">${(idx[t.id] || []).length}</span>
+      </div>`).join('')}`;
+}
+
+function renderTopicSidebar(topicId, activeKey) {
+  const sb = document.getElementById('sidebarContent');
+  if (!sb) return;
+  const topic = (window.TOPICS || []).find(t => t.id === topicId);
+  if (!topic) return;
+  const items = buildTopicIndex()[topicId] || [];
+  const allKeys = items.map(it => `${it.examId}/${it.domainId}/${it.sectionId}`);
+  const visitedCount = allKeys.filter(k => visited[k]).length;
+  const progPct = allKeys.length ? Math.round((visitedCount / allKeys.length) * 100) : 0;
+  sb.innerHTML = `
+    <div class="sb-exam-badge" style="border-bottom:3px solid ${topic.color}20">
+      <div class="sb-badge-code" style="color:${topic.color}">${topic.icon} ${topic.name}</div>
+      <div class="sb-badge-name">${topic.desc}</div>
+    </div>
+    <div class="sb-progress">
+      <div class="sb-prog-label"><span>Progress</span><span>${progPct}%</span></div>
+      <div class="sb-prog-bar"><div class="sb-prog-fill" style="width:${progPct}%;background:${topic.color}"></div></div>
+    </div>
+    <div class="sb-section-label">SECTIONS · BEGINNER → EXPERT</div>
+    ${items.map(it => {
+      const key = `${it.examId}/${it.domainId}/${it.sectionId}`;
+      const isActive = key === activeKey;
+      const isVisited = !!visited[key];
+      return `<div class="sb-section-link ${isActive ? 'active' : ''} ${isVisited ? 'visited' : ''}"
+        onclick="navigateFromTopic('${topicId}','${it.examId}','${it.domainId}','${it.sectionId}')" style="color:${isActive ? topic.color : ''}">
+        ${it.section.icon} ${it.section.title}
+        <span class="sb-exam-tag">${it.exam.meta.code}</span>
+        <div class="sb-section-dot"></div>
+      </div>`;
+    }).join('')}
+    <div style="height:1px;background:var(--border);margin:8px 16px"></div>
+    <div class="sb-quiz-link" onclick="navigate('hub')" style="color:var(--text-dim)">
+      🏠 Back to All Topics
+    </div>`;
 }
 
 function renderExamSidebar(exam, activeDomain, activeSection) {
@@ -295,58 +388,62 @@ function renderHub() {
   const pg = document.getElementById('pageContent');
   if (!pg) return;
 
-  const levels    = ['Beginner','Intermediate','Advanced','Expert'];
-  const levelMeta = {
-    Beginner:     { icon:'🌱', color:'#22c55e', hint:'No prior cloud knowledge needed' },
-    Intermediate: { icon:'⚡', color:'#f97316', hint:'Hands-on Azure administration' },
-    Advanced:     { icon:'🔥', color:'#8b5cf6', hint:'Architecture, DevOps and design' },
-    Expert:       { icon:'💎', color:'#ef4444', hint:'Security and advanced networking' },
-  };
-  const path = window.LEARNING_PATH || [];
+  const topics = window.TOPICS || [];
+  const idx = buildTopicIndex();
+  const totalSections = Object.values(idx).reduce((n, list) => n + list.length, 0);
+  const totalQuestions = Object.values(window.EXAMS || {}).reduce((n, e) => n + (e.quiz?.length || 0), 0);
 
   pg.innerHTML = `
     <div class="hub-hero">
-      <div class="hub-title"><span class="hub-grad">Master Azure</span><br>One Certification at a Time</div>
-      <p class="hub-desc">25 topics ordered from fundamentals to expert level, each with plain-language explanations and a real-world example. Start at the top and work your way down — no prior cloud experience needed.</p>
+      <div class="hub-title"><span class="hub-grad">Master Azure</span><br>One Topic at a Time</div>
+      <p class="hub-desc">Study by subject, not by exam code. Every topic below pulls together the beginner-through-expert content that touches it, each with a plain-language explanation and a real-world example.</p>
       <div class="hub-cta">
-        <button class="btn btn-primary" onclick="navigate('az900/cloud-concepts')">🌱 Start from the Beginning</button>
+        <button class="btn btn-primary" onclick="navigateFromTopic('fundamentals','az900','cloud-concepts','benefits')">🌱 Start with Cloud Fundamentals</button>
         <button class="btn btn-secondary" onclick="openMap()">🗺️ Azure Services Map</button>
       </div>
       <div class="hub-stats">
-        <div><div class="hub-stat-num">25</div><div class="hub-stat-label">Topics</div></div>
-        <div><div class="hub-stat-num">4</div><div class="hub-stat-label">Levels</div></div>
+        <div><div class="hub-stat-num">${topics.length}</div><div class="hub-stat-label">Topics</div></div>
+        <div><div class="hub-stat-num">${totalSections}</div><div class="hub-stat-label">Sections</div></div>
         <div><div class="hub-stat-num">200+</div><div class="hub-stat-label">Services Mapped</div></div>
-        <div><div class="hub-stat-num">100+</div><div class="hub-stat-label">Practice Questions</div></div>
+        <div><div class="hub-stat-num">${totalQuestions}+</div><div class="hub-stat-label">Practice Questions</div></div>
       </div>
     </div>
-    ${levels.map(level => {
-      const topics = path.filter(t => t.level === level);
-      if (!topics.length) return '';
-      const m = levelMeta[level];
-      return `
-        <div class="hub-role-group">
-          <div class="hub-role-label" style="color:${m.color};border-color:${m.color}30">
-            ${m.icon} ${level} <span style="font-weight:400;opacity:0.7;text-transform:none;letter-spacing:0">— ${m.hint}</span>
-          </div>
-          <div class="grid g3">
-            ${topics.map(t => `
-              <div class="topic-card card card-hover-lift" onclick="navigate('${t.exam}/${t.domain}')"
-                   style="cursor:pointer;border-color:${t.color}25;position:relative;overflow:hidden">
-                <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${t.color};border-radius:var(--radius) var(--radius) 0 0"></div>
-                <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
-                  <span style="font-size:24px;flex-shrink:0;margin-top:2px">${t.icon}</span>
-                  <div>
-                    <div style="font-size:15px;font-weight:700;color:${t.color};line-height:1.3">${t.title}</div>
-                    <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;
-                      background:${t.color}18;color:${t.color};border:1px solid ${t.color}35">${level}</span>
-                  </div>
-                </div>
-                <div style="font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:12px">${t.desc}</div>
-                <div style="font-size:13px;color:${t.color};font-weight:600">Study →</div>
-              </div>`).join('')}
-          </div>
-        </div>`;
-    }).join('')}`;
+    <div class="hub-role-group">
+      <div class="hub-role-label" style="color:var(--text-dim);border-color:var(--border)">Browse by Topic</div>
+      <div class="grid g3">
+        ${topics.map(t => {
+          const items = idx[t.id] || [];
+          return `<div class="topic-card card card-hover-lift" onclick="navigate('topic/${t.id}')"
+                       style="cursor:pointer;border-color:${t.color}25;position:relative;overflow:hidden">
+            <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${t.color};border-radius:var(--radius) var(--radius) 0 0"></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
+              <span style="font-size:24px;flex-shrink:0;margin-top:2px">${t.icon}</span>
+              <div>
+                <div style="font-size:15px;font-weight:700;color:${t.color};line-height:1.3">${t.name}</div>
+                <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;
+                  background:${t.color}18;color:${t.color};border:1px solid ${t.color}35">${items.length} sections</span>
+              </div>
+            </div>
+            <div style="font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:12px">${t.desc}</div>
+            <div style="font-size:13px;color:${t.color};font-weight:600">Explore →</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div class="hub-role-group">
+      <div class="hub-role-label" style="color:var(--text-dim);border-color:var(--border)">Practice Quizzes by Certification</div>
+      <div class="grid g3">
+        ${Object.entries(window.EXAMS || {}).map(([id, exam]) => `
+          <div class="card card-hover-lift" onclick="navigate('${id}/quiz')" style="cursor:pointer;border-color:${exam.meta.color}25">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <span style="font-size:20px">${exam.meta.icon}</span>
+              <div style="font-weight:800;color:${exam.meta.color}">${exam.meta.code}</div>
+            </div>
+            <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">${exam.meta.name}</div>
+            <div style="font-size:12px;color:${exam.meta.color};font-weight:600">🎯 ${exam.quiz.length} Questions →</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
 }
 
 // ── Breadcrumb ─────────────────────────────────────────────────────────────────
@@ -432,12 +529,20 @@ function renderSection(exam, domainId, sectionId) {
     if (l.getAttribute('onclick')?.includes(`'${key}'`)) l.classList.add('visited');
   });
 
+  const topic = (window.TOPICS || []).find(t => t.id === section.topic);
+  const inTopicMode = currentTopic && section.topic === currentTopic;
+
   const pg = document.getElementById('pageContent');
   pg.innerHTML = `
     <div style="margin-bottom:24px">
-      ${breadcrumb([{ label: '🏠 Home', route: 'hub' }, { label: exam.meta.code, route: id }, { label: domain.name, route: `${id}/${domainId}` }, { label: section.title }])}
-      <div class="section-tag" style="border-color:${domain.color}40;color:${domain.color};background:${domain.color}15">${exam.meta.code} · ${domain.name} · ${domain.weight}</div>
+      ${inTopicMode
+        ? breadcrumb([{ label: '🏠 Home', route: 'hub' }, { label: `${topic.icon} ${topic.name}`, route: `topic/${topic.id}` }, { label: section.title }])
+        : breadcrumb([{ label: '🏠 Home', route: 'hub' }, { label: exam.meta.code, route: id }, { label: domain.name, route: `${id}/${domainId}` }, { label: section.title }])}
+      <div class="section-tag" style="border-color:${domain.color}40;color:${domain.color};background:${domain.color}15">
+        ${inTopicMode ? `${topic.icon} ${topic.name}` : `${exam.meta.code} · ${domain.name} · ${domain.weight}`}
+      </div>
       <h1 class="section-title">${section.icon} ${section.title}</h1>
+      ${inTopicMode ? `<span class="exam-badge-pill" style="color:${exam.meta.color};border-color:${exam.meta.color}40;background:${exam.meta.color}15;cursor:pointer" onclick="navigate('${id}')" title="View full ${exam.meta.code} certification track">${exam.meta.icon} From ${exam.meta.code} · ${window.EXAM_LEVEL[id]?.label || exam.meta.level}</span>` : ''}
     </div>
     ${section.example ? `
     <div class="rwe-wrap">
@@ -446,7 +551,7 @@ function renderSection(exam, domainId, sectionId) {
     </div>` : ''}
     <div id="sectionBody">${section.render()}</div>
     <div style="margin-top:40px;padding-top:24px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap">
-      ${getNavButtons(exam, domainId, sectionId)}
+      ${inTopicMode ? getTopicNavButtons(topic.id, id, domainId, sectionId) : getNavButtons(exam, domainId, sectionId)}
     </div>`;
 
   // Init any D3 trees or interactive elements defined in the section
@@ -463,6 +568,17 @@ function getNavButtons(exam, domainId, sectionId) {
     ${prev?`<button class="btn btn-secondary" onclick="navigate('${id}/${prev.domainId}/${prev.sectionId}')">← Previous</button>`:''}
     <button class="btn btn-ghost" onclick="navigate('${id}')">Overview</button>
     ${next?`<button class="btn btn-primary" onclick="navigate('${id}/${next.domainId}/${next.sectionId}')">Next →</button>`:`<button class="btn btn-primary" onclick="navigate('${id}/quiz')">Take Quiz 🎯</button>`}`;
+}
+
+function getTopicNavButtons(topicId, examId, domainId, sectionId) {
+  const items = buildTopicIndex()[topicId] || [];
+  const idx = items.findIndex(it => it.examId === examId && it.domainId === domainId && it.sectionId === sectionId);
+  const prev = items[idx - 1];
+  const next = items[idx + 1];
+  return `
+    ${prev ? `<button class="btn btn-secondary" onclick="navigateFromTopic('${topicId}','${prev.examId}','${prev.domainId}','${prev.sectionId}')">← Previous</button>` : ''}
+    <button class="btn btn-ghost" onclick="navigate('topic/${topicId}')">Topic Overview</button>
+    ${next ? `<button class="btn btn-primary" onclick="navigateFromTopic('${topicId}','${next.examId}','${next.domainId}','${next.sectionId}')">Next →</button>` : ''}`;
 }
 
 // ── Inner Tabs (within sections) ───────────────────────────────────────────────
