@@ -338,6 +338,35 @@ body::before {
 .hub-map-wrap { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 32px; }
 .hub-map-header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; }
 
+/* ── Breadcrumb ── */
+.breadcrumb { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+.bc-link { cursor: pointer; color: var(--text-dim); transition: color 0.15s; }
+.bc-link:hover { color: #50abf1; text-decoration: underline; }
+.bc-current { color: var(--text); font-weight: 600; }
+.bc-sep { color: var(--text-muted); opacity: 0.5; font-size: 11px; }
+
+/* ── Exam Switcher Dropdown ── */
+.exam-dropdown { display: none; position: fixed; background: #0d1421; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 16px 48px rgba(0,0,0,0.6); width: 280px; max-height: 420px; overflow-y: auto; z-index: 300; }
+.exam-dropdown.show { display: block; }
+.exam-dd-item { padding: 12px 14px; cursor: pointer; transition: background 0.15s; display: flex; flex-direction: column; gap: 2px; border-left: 3px solid transparent; border-bottom: 1px solid var(--border); }
+.exam-dd-item:last-child { border-bottom: none; }
+.exam-dd-item:hover { background: rgba(255,255,255,0.05); }
+.exam-dd-code { font-weight: 800; font-size: 13px; }
+.exam-dd-name { font-size: 11px; color: var(--text-dim); }
+body.light .exam-dropdown { background: #ffffff; }
+
+/* ── Real-World Example toggle ── */
+.rwe-wrap { margin: 0 0 26px; }
+.rwe-toggle { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(0,212,255,0.35); background: rgba(0,212,255,0.08); color: #00d4ff; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.18s; }
+.rwe-toggle:hover { background: rgba(0,212,255,0.16); }
+.rwe-toggle .rwe-arrow { transition: transform 0.2s; font-size: 10px; }
+.rwe-toggle.open .rwe-arrow { transform: rotate(180deg); }
+.rwe-box { display: none; margin-top: 10px; padding: 14px 18px; border-radius: var(--radius-sm); background: rgba(0,212,255,0.05); border-left: 3px solid #00d4ff; font-size: 13.5px; color: var(--text-dim); line-height: 1.7; }
+.rwe-box.show { display: block; animation: fadeUp 0.2s ease; }
+.rwe-box strong { color: var(--text); }
+body.light .rwe-toggle { background: rgba(0,120,212,0.08); border-color: rgba(0,120,212,0.3); color: #0078d4; }
+body.light .rwe-box { background: rgba(0,120,212,0.05); }
+
 /* ── Light Mode ── */
 body.light {
   --bg: #f0f4f8;

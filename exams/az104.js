@@ -6,6 +6,7 @@ window.EXAMS.az104 = {
       id:'identity', name:'Identities & Governance', weight:'15-20%', color:'#7c4dff',
       sections: [
         { id:'azure-ad', title:'Azure Active Directory (Entra ID)', icon:'👤',
+          example: `A hospital IT admin manages 3,000 staff logins through <strong>Azure AD (Entra ID)</strong>. Nurses sit in a <strong>Group</strong> tied to a Conditional Access policy that requires MFA only when they are off-campus, while a scheduling app authenticates to the EHR database using a <strong>Managed Identity</strong> so no credentials ever sit in code. When a traveling nurse from a partner hospital needs temporary chart access, she is added as a guest instead of getting a brand-new local account. Six months later an audit shows exactly which app registrations exist and who can see what, because everything traces back to one tenant instead of scattered local logins.`,
           render: () => `
 <div class="section-desc">Azure AD is the cloud IAM backbone. It is NOT the same as Windows Server AD — it uses OAuth 2.0/OIDC (not LDAP/Kerberos) and is managed through a REST API, not Group Policy.</div>
 <div class="tabs" id="aad-tabs">
@@ -68,6 +69,7 @@ window.EXAMS.az104 = {
 </div>` },
 
         { id:'sspr-devices', title:'SSPR, Device Management & Conditional Access', icon:'🔐',
+          example: `A 5,000-employee firm's helpdesk was drowning in password reset tickets every Monday morning. Enabling <strong>SSPR</strong> with password writeback lets employees reset their own password from the login screen and have it sync straight back to on-prem AD, cutting ticket volume in half overnight. Meanwhile the admin sets a Conditional Access policy requiring a compliant device: laptops that are <strong>Hybrid Azure AD Joined</strong> and enrolled in Intune pass automatically, but a personal phone that is only <strong>Azure AD Registered</strong> gets blocked from email until it meets policy. The helpdesk goes back to handling real problems instead of fielding "I forgot my password" calls all day.`,
           render: () => `
 <div class="section-desc">Self-Service Password Reset and device management are core AZ-104 identity topics. Understanding device join types determines which Conditional Access controls can be applied.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -102,6 +104,7 @@ window.EXAMS.az104 = {
 </div>` },
 
         { id:'rbac', title:'RBAC & Subscriptions', icon:'🔑',
+          example: `A retailer's cloud team is tightening access after a contractor accidentally deleted a test VM. They assign the <strong>Reader</strong> role at the subscription for most staff, <strong>Contributor</strong> to the DevOps team scoped to just the resource group they own, and reserve <strong>Owner</strong> for two people. To make sure no one — not even an Owner — can delete the production database by accident, they add a CanNotDelete <strong>resource lock</strong> directly on it, plus an <strong>Azure Policy</strong> that denies creating storage accounts outside their approved region. Least privilege plus a hard safety net means the next fat-fingered delete simply fails instead of taking down production.`,
           render: () => `
 <div class="section-desc">Role-Based Access Control answers: WHO can do WHAT at which SCOPE. Always assign at the lowest scope needed (principle of least privilege).</div>
 <div class="grid g2" style="margin-bottom:20px">
@@ -164,6 +167,7 @@ window.EXAMS.az104 = {
       id:'storage', name:'Implement & Manage Storage', weight:'15-20%', color:'#f97316',
       sections: [
         { id:'storage-accounts', title:'Storage Accounts', icon:'💾',
+          example: `A media company stores customer-uploaded videos in a <strong>storage account</strong> and needs three things at once: cheap bulk storage, secure sharing links for freelance editors, and durability if a datacenter goes down. They pick <strong>GRS</strong> replication so a regional outage does not lose footage, generate time-limited <strong>SAS tokens</strong> so editors can upload without a full Azure account, and drop finished, rarely-touched projects into the Cool <strong>access tier</strong> to cut storage costs. A year-old project nobody has opened in months quietly moves to Archive, saving real money without anyone lifting a finger.`,
           render: () => `
 <div class="section-desc">A storage account is the top-level namespace for Azure Storage services. Everything (Blob, Files, Queue, Table) lives inside a storage account.</div>
 <table class="cmp-table" style="margin-bottom:20px"><thead><tr><th>Replication</th><th>Copies</th><th>Protects Against</th><th>Read Access</th><th>Best For</th></tr></thead><tbody>
@@ -202,6 +206,7 @@ window.EXAMS.az104 = {
   </div>
 </div>` }
         ,{ id:'storage-security', title:'Storage Security, Soft Delete & Versioning', icon:'🔐',
+          example: `A financial services company gets a ransomware scare when an attacker gains a stolen storage key. Because the storage firewall was already set to Deny by default with only their VNet and a <strong>Private Endpoint</strong> allowed, the attacker's external requests are rejected outright. When the security team checks a container of client documents, <strong>blob versioning</strong> shows every prior version is intact, and <strong>soft delete</strong> means anything the attacker did manage to delete is still recoverable within the retention window. Nothing was actually lost — the layered defenses did exactly what they were configured for.`,
           render: () => `
 <div class="section-desc">Storage accounts have multiple layers of security: network controls, access tiers, soft delete, and versioning. These are heavily tested in AZ-104.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -237,6 +242,7 @@ window.EXAMS.az104 = {
       id:'compute', name:'Deploy & Manage Compute', weight:'20-25%', color:'#3b82f6',
       sections: [
         { id:'vms', title:'Virtual Machines', icon:'🖥️',
+          example: `An e-commerce company runs its checkout service on VMs and wants it to survive both a single rack failure and a full datacenter outage. They place pairs of VMs in an <strong>Availability Set</strong> for cheap rack-level protection, and their most critical VMs across <strong>Availability Zones</strong> for datacenter-level protection, sized on the D-series since it is a balanced web workload rather than a GPU or storage-heavy one. During Black Friday, a <strong>VM Scale Set</strong> automatically spins up extra instances as CPU climbs past 70%, then scales back down overnight — no one gets paged and no one overpays for idle capacity.`,
           render: () => `
 <div class="section-desc">Azure VMs are IaaS compute. You manage the OS and everything above. Azure manages the physical hardware.</div>
 <div class="tabs" id="vm-tabs">
@@ -300,6 +306,7 @@ window.EXAMS.az104 = {
 </div>` },
 
         { id:'aks', title:'AKS & Container Services', icon:'☸️',
+          example: `A fintech startup's monolith becomes too slow to deploy safely, so they split it into 40 microservices running on <strong>AKS</strong>. Azure manages the control plane for free while their team only worries about the <strong>node pools</strong> running the actual code. When Black Friday-level traffic hits the checkout service, the <strong>Horizontal Pod Autoscaler</strong> adds more pods first, and once nodes run out of room the <strong>Cluster Autoscaler</strong> quietly adds VMs to make space for them. By 2am traffic drops and both scale back down, so the team is not stuck babysitting a fixed-size cluster around the clock.`,
           render: () => `
 <div class="section-desc">Azure Kubernetes Service (AKS) provides a managed Kubernetes control plane. You manage the worker nodes (node pools). Azure manages masters, etcd, API server.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -331,6 +338,7 @@ window.EXAMS.az104 = {
 </tbody></table>` },
 
         { id:'appservice', title:'App Service & Functions', icon:'🌐',
+          example: `A SaaS company needs to ship a risky pricing-page redesign without any customer noticing downtime if it breaks. They deploy the new code to a <strong>deployment slot</strong> on their Standard-tier App Service plan, let it warm up fully, then <strong>swap</strong> it into production in seconds. A separate background job that emails weekly reports runs as an <strong>Azure Function</strong> on a Consumption plan, so they pay only for the few minutes a week it actually executes. When the swap surfaces a subtle bug, they swap back just as fast — the whole incident lasts ninety seconds instead of an emergency rollback at 2am.`,
           render: () => `
 <div class="section-desc">Azure App Service is the go-to PaaS for web workloads. No server management — just deploy your code.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -372,6 +380,7 @@ window.EXAMS.az104 = {
 </div>` },
 
         { id:'vm-extensions-aci', title:'VM Extensions, ACI & Azure Virtual Desktop', icon:'🔧',
+          example: `A software company locks itself out of a production VM after an admin leaves mid-project with the only SSH key. Instead of rebuilding the VM, they use the <strong>VM Access extension</strong> to reset the admin credentials remotely in minutes. For a one-off nightly data-cleanup job, they skip VMs entirely and spin up a container in <strong>Azure Container Instances</strong> that runs for ninety seconds and disappears, billed per second. Their remote design team, meanwhile, works from underpowered laptops through <strong>Azure Virtual Desktop</strong> sessions with FSLogix profiles, so a new hire is fully set up before lunch instead of waiting a week for a shipped laptop.`,
           render: () => `
 <div class="section-desc">VM extensions add post-deployment configuration and automation to VMs. ACI and AVD are container and desktop compute options tested in AZ-104.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -419,6 +428,7 @@ window.EXAMS.az104 = {
       id:'networking', name:'Virtual Networking', weight:'15-20%', color:'#22c55e',
       sections: [
         { id:'vnets', title:'VNets, NSGs & Routing', icon:'🔗',
+          example: `A hospital network's billing servers must never be reachable from the guest WiFi subnet, even though both sit in the same <strong>VNet</strong>. The network admin writes an <strong>NSG</strong> rule denying that traffic at priority 100, well ahead of the default catch-all rules, and confirms it with Network Watcher's IP Flow Verify tool. For their Azure SQL database, they skip the public internet path entirely using a <strong>Private Endpoint</strong>, so billing data never leaves the VNet even if a connection string leaks. When two hospital campuses need to share files, they set up <strong>VNet Peering</strong> between the VNets — fast, private, and with zero VPN hardware to maintain.`,
           render: () => `
 <div class="section-desc">Virtual Networks are the foundation of Azure networking. Resources in the same VNet can communicate privately by default. Cross-VNet communication requires peering, VPN, or ExpressRoute.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -478,6 +488,7 @@ Default Outbound Rules:
 </div>` },
 
         { id:'lb', title:'Load Balancing & Connectivity', icon:'⚖️',
+          example: `A global ticketing company runs identical web farms in three regions and needs traffic routed to whichever one is healthy and fastest. <strong>Traffic Manager</strong> handles the global DNS-level routing, sending Australian users to the Asia-Pacific region without a packet crossing an ocean unnecessarily. Inside each region, an <strong>Application Gateway</strong> with WAF load-balances HTTP traffic across VMs and blocks SQL injection attempts before they reach a server, while a plain <strong>Azure Load Balancer</strong> handles the raw TCP traffic for their internal database cluster. When one entire region goes dark during a cloud outage, Traffic Manager reroutes everyone within a couple of minutes and most customers never notice.`,
           render: () => `
 <div class="section-desc">Azure has 4 load balancing options for different scenarios: local vs global, L4 vs L7, internal vs external.</div>
 <table class="cmp-table" style="margin-bottom:20px"><thead><tr><th>Service</th><th>Layer</th><th>Scope</th><th>Protocol</th><th>Features</th><th>Best For</th></tr></thead><tbody>
@@ -514,6 +525,7 @@ Default Outbound Rules:
 </div>` },
 
         { id:'dns', title:'Azure DNS & Private DNS Zones', icon:'🔍',
+          example: `A company migrates its root domain to Azure and needs contoso.com itself, not just www, to point at their Front Door endpoint — something a standard CNAME cannot do at the zone apex. They use an <strong>Alias record</strong> in <strong>Azure DNS</strong> instead, which updates automatically whenever the Front Door IP changes. Internally, their app team sets up a <strong>Private DNS zone</strong> so VMs resolve their SQL Database's private endpoint by name instead of its public IP — and they remember to link that zone to every VNet that needs it, because forgetting one VNet means traffic silently leaks out to the public internet instead of staying private.`,
           render: () => `
 <div class="section-desc">Azure DNS hosts your public authoritative DNS zones and Private DNS zones handle name resolution for VNet resources and Private Endpoints.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -554,6 +566,7 @@ Default Outbound Rules:
 </div>` },
 
         { id:'network-watcher', title:'Network Watcher & NSG Flow Logs', icon:'📡',
+          example: `An admin gets paged because a VM suddenly cannot reach a partner API, and nobody admits to changing anything. Instead of guessing, they run <strong>IP Flow Verify</strong> in <strong>Network Watcher</strong> and immediately see a teammate quietly added a Deny rule to the NSG last week. For an ongoing intermittent latency issue, they turn on <strong>NSG Flow Logs</strong> feeding into <strong>Traffic Analytics</strong>, and a KQL query surfaces a single misbehaving IP hammering the subnet with denied requests. What would have been a day of blind troubleshooting turns into a five-minute root-cause fix.`,
           render: () => `
 <div class="section-desc">Network Watcher provides monitoring, diagnostics, and logging tools for Azure virtual networks. NSG Flow Logs give complete visibility into network traffic.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -596,6 +609,7 @@ Default Outbound Rules:
       id:'monitoring', name:'Monitor & Maintain Resources', weight:'10-15%', color:'#eab308',
       sections: [
         { id:'monitor', title:'Azure Monitor & Alerting', icon:'📡',
+          example: `An ops engineer at a logistics company wants to know the instant a delivery-tracking VM's disk fills up, not find out from an angry customer email. They set an <strong>Azure Monitor</strong> metric alert on disk usage that fires an Action Group to text the on-call engineer, and route application logs into a <strong>Log Analytics</strong> workspace queried with KQL to spot slow database calls. When a botched deployment corrupts a VM, they restore it in minutes from a nightly <strong>Recovery Services Vault</strong> backup instead of rebuilding from scratch. And because <strong>Azure Site Recovery</strong> is already replicating their whole VM fleet to a second region, a full regional outage becomes a scheduled failover drill instead of a resume-generating event.`,
           render: () => `
 <div class="section-desc">Azure Monitor is the unified observability platform. It collects metrics and logs from every Azure resource automatically.</div>
 <div class="grid g3" style="margin-bottom:16px">
@@ -642,6 +656,7 @@ Default Outbound Rules:
 </div>` },
 
         { id:'automation', title:'Azure Automation & Update Manager', icon:'🤖',
+          example: `A sysadmin team was manually starting and stopping forty dev/test VMs every night to save money — until someone forgot for a month and racked up a huge bill. They write an <strong>Automation runbook</strong> that runs on a schedule to shut down all dev VMs at 7pm and start them again at 7am, saving real budget with zero manual effort. Patching used to mean RDPing into each server one at a time; now <strong>Azure Update Manager</strong> assesses missing patches across the whole fleet and deploys them in a defined maintenance window overnight. A <strong>Hybrid Runbook Worker</strong> even lets the same runbooks reach into their on-premises file servers, so one automation platform covers both cloud and on-prem instead of two separate toolsets.`,
           render: () => `
 <div class="section-desc">Azure Automation runs runbooks to automate repetitive tasks. Azure Update Manager (successor to Update Management) manages OS patches at scale across Azure and Arc-enabled servers.</div>
 <div class="grid g2" style="margin-bottom:16px">

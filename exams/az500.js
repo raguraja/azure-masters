@@ -6,6 +6,7 @@ window.EXAMS.az500 = {
       id:'identity-access', name:'Manage Identity & Access', weight:'25-30%', color:'#7c4dff',
       sections: [
         { id:'conditional-access', title:'Conditional Access & MFA', icon:'🔐',
+          example: `An employee at a finance company clicks a phishing link and types their password into a fake Microsoft login page, handing their credentials straight to an attacker in another country. When the attacker tries to sign in with the stolen password, <strong>Conditional Access</strong> notices the sign-in is coming from an unfamiliar country on an unmanaged device and demands a second factor. Because the employee never approved the push notification from <strong>Microsoft Authenticator</strong>, the attacker is blocked cold, even though the password itself was correct. Meanwhile <strong>Identity Protection</strong> flags the sign-in as high risk and forces a password reset before the real employee's next login. The stolen password becomes worthless the moment MFA gets in the way.`,
           render: () => `
 <div class="section-desc">Conditional Access is the Zero Trust policy engine — it evaluates signals and makes access decisions. Think of it as an IF/THEN policy: IF (conditions) THEN (access control).</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -76,6 +77,7 @@ window.EXAMS.az500 = {
 </div>` },
 
         { id:'managed-identities', title:'Managed Identities & Service Principals', icon:'🤖',
+          example: `A developer pushes a script to a public GitHub repo and forgets it contains the storage account connection string hardcoded at the top. Within minutes, automated bots scanning GitHub for leaked secrets have already tried to use that key to spin up cryptomining VMs. On a properly built app, this couldn't happen: the code uses a <strong>System-Assigned Managed Identity</strong> instead of a stored credential, so there's no secret sitting in a file for anyone to steal. Even if an attacker gets read access to the repo, there is nothing to copy, since the identity's token is issued automatically to the resource and never touches source control. One design decision turns a leaked-secret headline into a non-event.`,
           render: () => `
 <div class="section-desc">Managed Identities eliminate the need to store credentials in code. Azure automatically manages the credential lifecycle.</div>
 <table class="cmp-table" style="margin-bottom:16px"><thead><tr><th>Feature</th><th>System-Assigned MI</th><th>User-Assigned MI</th><th>Service Principal</th></tr></thead><tbody>
@@ -98,6 +100,7 @@ window.EXAMS.az500 = {
 </div>` },
 
         { id:'app-proxy-defender-identity', title:'App Proxy, Defender for Identity & Easy Auth', icon:'🛡️',
+          example: `A remote employee needs to reach the company's internal HR portal without connecting through a VPN, so IT publishes it through <strong>Azure AD Application Proxy</strong>, keeping the on-prem server's ports closed to the internet entirely. A week later, an attacker who slipped a foothold onto a different workstation tries a pass-the-hash attack to jump toward a domain controller. <strong>Microsoft Defender for Identity</strong>'s sensor on the DC catches the unusual authentication pattern immediately and raises an alert before the attacker can reach anything sensitive. On the HR portal itself, the developers never wrote a single line of login code, since <strong>Easy Auth</strong> handles the redirect to Azure AD and MFA automatically. Three different layers, three different attacks stopped, zero VPN clients installed.`,
           render: () => `
 <div class="section-desc">Azure AD Application Proxy publishes on-prem apps externally without VPN. Defender for Identity protects on-prem AD. App Service Easy Auth handles authentication without code.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -148,6 +151,7 @@ window.EXAMS.az500 = {
       id:'network-security', name:'Secure Networking', weight:'20-25%', color:'#22c55e',
       sections: [
         { id:'firewall', title:'Azure Firewall & WAF', icon:'🔥',
+          example: `An e-commerce site suddenly gets hit by a botnet flooding it with junk traffic trying to knock the checkout page offline during a big sale. <strong>Azure DDoS Protection</strong> Standard absorbs the volumetric flood automatically, while <strong>WAF</strong> sitting in front of the app on Application Gateway blocks a separate wave of SQL injection attempts probing the login form, thanks to its OWASP Core Rule Set. Later, malware that snuck onto a backend VM tries to phone home to a command-and-control server, and <strong>Azure Firewall</strong> Premium's IDPS signature matching catches the outbound connection attempt and kills it before any data leaves the network. The admins never touch the app code; all three attacks are stopped at the network edge, and the sale finishes without a hiccup.`,
           render: () => `
 <div class="section-desc">Azure Firewall provides stateful network security as a fully managed service. WAF provides application-layer (L7) HTTP protection.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -190,6 +194,7 @@ window.EXAMS.az500 = {
       id:'compute-security', name:'Secure Compute, Storage & Databases', weight:'20-25%', color:'#f97316',
       sections: [
         { id:'defender', title:'Microsoft Defender for Cloud', icon:'🛡️',
+          example: `A security audit reveals that a forgotten test VM has had RDP port 3389 open to the entire internet for six months, and log analysis shows thousands of automated brute-force login attempts hitting it every single day. The team turns on <strong>Just-In-Time VM Access</strong> in <strong>Microsoft Defender for Cloud</strong>, which locks the port shut by default and only opens it for a few hours when someone explicitly requests access from their own IP. Their <strong>Secure Score</strong> jumps immediately, and the recommendations list flags a dozen other VMs with the same exposure so the team can fix them before an attacker finds them first. Six months of silent brute-force noise disappears from the logs overnight.`,
           render: () => `
 <div class="section-desc">Microsoft Defender for Cloud (formerly Security Center + Azure Defender) provides CSPM (Cloud Security Posture Management) and CWPP (Cloud Workload Protection).</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -227,6 +232,7 @@ window.EXAMS.az500 = {
 </div>` },
 
         { id:'keyvault', title:'Azure Key Vault', icon:'🔑',
+          example: `A disgruntled contractor with temporary admin access tries to sabotage the company on their way out by deleting every secret in the production <strong>Key Vault</strong>, hoping to take down the payment system. Because <strong>Soft Delete</strong> and <strong>Purge Protection</strong> were enabled, the secrets aren't actually gone; they sit in a recoverable state for up to 90 days, and not even an admin can force a permanent purge during that window. The security team restores every secret within the hour and reviews the audit log to see exactly which credentials were touched. Without those two settings turned on, that same afternoon would have been a full outage instead of a quick rollback.`,
           render: () => `
 <div class="section-desc">Key Vault is the secret store for Azure. NEVER store secrets in code, config files, or environment variables — always use Key Vault.</div>
 <div class="grid g3" style="margin-bottom:16px">
@@ -257,6 +263,7 @@ window.EXAMS.az500 = {
 </div>` },
 
         { id:'encryption', title:'Azure Encryption & Data Protection', icon:'🔐',
+          example: `An attacker manages to copy a company's SQL database backup file off a misconfigured storage account before anyone notices. It doesn't matter much, because <strong>Transparent Data Encryption</strong> means the backup file is encrypted at rest, so the raw file is useless without the key. The security team went further too: customer social security numbers were stored using <strong>Always Encrypted</strong>, meaning even a legitimate database query from inside the compromised network only returns ciphertext, since the decryption keys live in the client application rather than the database engine. Separately, an analyst notices someone tried to intercept traffic between the app and SQL over an open Wi-Fi network, but TLS 1.2 encryption in transit turned the captured packets into unreadable gibberish. Three layers of encryption turn what should have been a front-page breach into a non-story.`,
           render: () => `
 <div class="section-desc">Encryption is a foundational security control. Azure encrypts data at rest by default and enforces TLS for data in transit. Understanding the encryption models is critical for AZ-500.</div>
 <div class="grid g3" style="margin-bottom:16px">
@@ -295,6 +302,7 @@ window.EXAMS.az500 = {
 </div>` },
 
         { id:'compliance-frameworks', title:'Regulatory Compliance & Purview', icon:'📋',
+          example: `A customer emails asking the company to delete all their personal data under GDPR's right to erasure, and separately a PCI DSS auditor shows up demanding proof that credit card data is properly classified and protected. Without <strong>Microsoft Purview</strong>, the data team would have to manually hunt across dozens of databases, file shares, and SaaS apps hoping they found every copy. Instead, Purview's Data Map and automatic <strong>Data Classification</strong> already know exactly where every instance of that customer's PII and every card number lives, because sensitivity labels were applied the moment the data was ingested. The team pulls a compliance report straight from <strong>Defender for Cloud</strong>'s Regulatory Compliance dashboard mapped to PCI DSS controls, satisfying the auditor in an afternoon instead of a month. What used to be a compliance fire drill becomes a five-minute query.`,
           render: () => `
 <div class="section-desc">Azure security engineers must understand regulatory compliance frameworks, how Azure maps to them, and how to use Microsoft Purview for data governance.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -339,6 +347,7 @@ window.EXAMS.az500 = {
 </div>` },
 
         { id:'container-db-security', title:'Container & Database Security', icon:'🐳',
+          example: `A developer builds a container image for a new microservice using an old base image with a known critical vulnerability and pushes it straight to the registry. <strong>Defender for Containers</strong> scans it on push, flags the CVE before it ever reaches the AKS cluster, and the deployment pipeline blocks the release automatically. Weeks later, someone leaves an outdated image running anyway, and Defender's runtime protection catches a container inside it suddenly trying to mine cryptocurrency, a telltale sign of exploitation, and alerts the team immediately. Meanwhile in the connected database, customer credit card numbers are protected with <strong>Always Encrypted</strong> rather than just Dynamic Data Masking, so even if the compromised container's service account could query the database, it would only ever see ciphertext, not real numbers. The vulnerable image gets patched before it does any damage, and the one attack that does land walks away with nothing usable.`,
           render: () => `
 <div class="section-desc">Securing container workloads and databases is a significant part of the AZ-500 exam. Defender for Containers and SQL security features are both tested.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -373,6 +382,7 @@ window.EXAMS.az500 = {
       id:'security-ops', name:'Manage Security Operations', weight:'25-30%', color:'#ef4444',
       sections: [
         { id:'sentinel', title:'Microsoft Sentinel (SIEM/SOAR)', icon:'🔭',
+          example: `A user's credentials get phished at 9am from an IP address in Singapore, then at 9:15am the same account successfully logs in from a home office in Ohio, a physically impossible trip. <strong>Microsoft Sentinel</strong>'s Analytics Rules catch the anomaly using a KQL query that flags multiple sign-in locations for one user within a short window, and it opens an Incident automatically. Because the same account also triggered a Defender for Endpoint alert for suspicious PowerShell activity minutes later, Sentinel's <strong>Fusion</strong> rule correlates both signals into a single high-confidence incident instead of two disconnected low-priority alerts. A <strong>Playbook</strong> built on Logic Apps kicks off automatically, disabling the account and notifying the security team before the attacker can move any further. What could have been a slow-burning breach gets shut down in under five minutes.`,
           render: () => `
 <div class="section-desc">Microsoft Sentinel is a cloud-native Security Information and Event Management (SIEM) and Security Orchestration, Automation, and Response (SOAR) platform. Built on Azure Monitor Log Analytics.</div>
 <div class="grid g2" style="margin-bottom:16px">

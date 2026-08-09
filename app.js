@@ -254,6 +254,35 @@ function renderExamSidebar(exam, activeDomain, activeSection) {
     </div>`;
 }
 
+// ── Exam Switcher Dropdown ─────────────────────────────────────────────────────
+function toggleExamDropdown(e) {
+  e.stopPropagation();
+  let dd = document.getElementById('examDropdown');
+  if (dd && dd.classList.contains('show')) { dd.classList.remove('show'); return; }
+  if (!dd) {
+    dd = document.createElement('div');
+    dd.className = 'exam-dropdown';
+    dd.id = 'examDropdown';
+    document.body.appendChild(dd);
+  }
+  dd.innerHTML = Object.entries(window.EXAMS || {}).map(([id, exam]) => `
+    <div class="exam-dd-item" style="border-left-color:${exam.meta.color}"
+         onclick="document.getElementById('examDropdown').classList.remove('show');navigate('${id}')">
+      <span class="exam-dd-code" style="color:${exam.meta.color}">${exam.meta.icon} ${exam.meta.code}</span>
+      <span class="exam-dd-name">${exam.meta.name}</span>
+    </div>`).join('');
+  const btn = document.getElementById('examSwitcherBtn');
+  const r = btn.getBoundingClientRect();
+  dd.style.top = (r.bottom + 8) + 'px';
+  dd.style.left = r.left + 'px';
+  dd.classList.add('show');
+}
+document.addEventListener('click', e => {
+  const dd = document.getElementById('examDropdown');
+  const btn = document.getElementById('examSwitcherBtn');
+  if (dd && dd.classList.contains('show') && !dd.contains(e.target) && e.target !== btn) dd.classList.remove('show');
+});
+
 function toggleDomain(domainId) {
   const el = document.getElementById(`sbdomain-${domainId}`);
   if (el) el.classList.toggle('open');
@@ -277,8 +306,8 @@ function renderHub() {
 
   pg.innerHTML = `
     <div class="hub-hero">
-      <div class="hub-title"><span class="hub-grad">Azure</span><br>Azure Study Guide</div>
-      <p class="hub-desc">25 topics ordered from fundamentals to expert level. Start at the top and work your way down.</p>
+      <div class="hub-title"><span class="hub-grad">Master Azure</span><br>One Certification at a Time</div>
+      <p class="hub-desc">25 topics ordered from fundamentals to expert level, each with plain-language explanations and a real-world example. Start at the top and work your way down — no prior cloud experience needed.</p>
       <div class="hub-cta">
         <button class="btn btn-primary" onclick="navigate('az900/cloud-concepts')">🌱 Start from the Beginning</button>
         <button class="btn btn-secondary" onclick="openMap()">🗺️ Azure Services Map</button>
@@ -320,6 +349,13 @@ function renderHub() {
     }).join('')}`;
 }
 
+// ── Breadcrumb ─────────────────────────────────────────────────────────────────
+function breadcrumb(items) {
+  return `<div class="breadcrumb">${items.map((it, i) => `${i > 0 ? '<span class="bc-sep">›</span>' : ''}${
+    it.route ? `<span class="bc-link" onclick="navigate('${it.route}')">${it.label}</span>` : `<span class="bc-current">${it.label}</span>`
+  }`).join('')}</div>`;
+}
+
 // ── Exam Overview ──────────────────────────────────────────────────────────────
 function renderExamOverview(exam) {
   const pg = document.getElementById('pageContent');
@@ -327,6 +363,7 @@ function renderExamOverview(exam) {
   const id = exam.meta.code.toLowerCase().replace('-','');
   pg.innerHTML = `
     <div style="margin-bottom:32px">
+      ${breadcrumb([{ label: '🏠 Home', route: 'hub' }, { label: exam.meta.code }])}
       <div class="section-tag" style="border-color:${exam.meta.color}40;color:${exam.meta.color};background:${exam.meta.color}15">${exam.meta.level}</div>
       <h1 class="section-title">${exam.meta.icon} ${exam.meta.code} <span style="background:linear-gradient(135deg,${exam.meta.color},#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">${exam.meta.name}</span></h1>
       <p class="section-desc">${exam.meta.roles.join(' · ')} · Prerequisite: ${exam.meta.prereq}</p>
@@ -361,6 +398,7 @@ function renderDomainOverview(exam, domainId) {
   const pg = document.getElementById('pageContent');
   pg.innerHTML = `
     <div style="margin-bottom:32px">
+      ${breadcrumb([{ label: '🏠 Home', route: 'hub' }, { label: exam.meta.code, route: id }, { label: domain.name }])}
       <div class="section-tag" style="border-color:${domain.color}40;color:${domain.color};background:${domain.color}15">${exam.meta.code} · ${domain.weight}</div>
       <h1 class="section-title">${domain.name}</h1>
     </div>
@@ -397,9 +435,15 @@ function renderSection(exam, domainId, sectionId) {
   const pg = document.getElementById('pageContent');
   pg.innerHTML = `
     <div style="margin-bottom:24px">
+      ${breadcrumb([{ label: '🏠 Home', route: 'hub' }, { label: exam.meta.code, route: id }, { label: domain.name, route: `${id}/${domainId}` }, { label: section.title }])}
       <div class="section-tag" style="border-color:${domain.color}40;color:${domain.color};background:${domain.color}15">${exam.meta.code} · ${domain.name} · ${domain.weight}</div>
       <h1 class="section-title">${section.icon} ${section.title}</h1>
     </div>
+    ${section.example ? `
+    <div class="rwe-wrap">
+      <button class="rwe-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">💡 Real-World Example <span class="rwe-arrow">▾</span></button>
+      <div class="rwe-box">${section.example}</div>
+    </div>` : ''}
     <div id="sectionBody">${section.render()}</div>
     <div style="margin-top:40px;padding-top:24px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap">
       ${getNavButtons(exam, domainId, sectionId)}
@@ -438,6 +482,7 @@ function renderQuizPage(exam) {
   const pg = document.getElementById('pageContent');
   pg.innerHTML = `
     <div style="margin-bottom:24px">
+      ${breadcrumb([{ label: '🏠 Home', route: 'hub' }, { label: exam.meta.code, route: id }, { label: 'Practice Quiz' }])}
       <div class="section-tag" style="border-color:${exam.meta.color}40;color:${exam.meta.color};background:${exam.meta.color}15">Practice Exam</div>
       <h1 class="section-title">🎯 ${exam.meta.code} Quiz</h1>
       <p class="section-desc">${exam.quiz.length} questions covering all exam domains. Immediate feedback with explanations.</p>

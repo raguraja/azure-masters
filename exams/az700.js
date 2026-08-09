@@ -6,6 +6,7 @@ window.EXAMS.az700 = {
       id:'hybrid-networking', name:'Design & Implement Hybrid Networking', weight:'10-15%', color:'#22c55e',
       sections: [
         { id:'vpn-expressroute', title:'VPN Gateway vs ExpressRoute', icon:'🔀',
+          example: `A regional bank connects its datacenter to Azure over a <strong>VPN Gateway</strong> site-to-site tunnel because it's fast to set up and cheap. Six months later, compliance auditors flag that trading data crosses the public internet, even encrypted, and the nightly batch job keeps timing out when ISP latency spikes. The bank orders an <strong>ExpressRoute</strong> circuit with Private Peering so trading traffic never touches the internet, then keeps the VPN Gateway alive as a low-cost failover path if the circuit ever drops. When the primary ISP has an outage during a market open, BGP quietly fails traffic over to the VPN tunnel and nobody outside the network team notices.`,
           render: () => `
 <div class="section-desc">Hybrid connectivity is the most critical decision in enterprise Azure networking. The choice impacts cost, security, performance, and reliability.</div>
 <table class="cmp-table" style="margin-bottom:16px"><thead><tr><th>Feature</th><th>VPN Gateway</th><th>ExpressRoute</th></tr></thead><tbody>
@@ -43,6 +44,7 @@ window.EXAMS.az700 = {
 </div>` },
 
         { id:'virtual-wan', title:'Azure Virtual WAN', icon:'🌐',
+          example: `A manufacturing company opens 40 factories across three continents, each needing connectivity into Azure and to each other for a shared ERP system. Wiring up individual VPN tunnels and route tables between every factory and every VNet would mean thousands of manual routes to maintain, and a UDR typo at any one site could silently blackhole traffic for the rest. Instead the network team deploys <strong>Azure Virtual WAN</strong> Standard with SD-WAN partner devices at each factory, so every site, VNet, and ExpressRoute circuit connects into a managed hub that handles any-to-any routing automatically. When a new factory opens in Vietnam, it is online and routing through the global hub network within a day instead of weeks of change requests.`,
           render: () => `
 <div class="section-desc">Azure Virtual WAN is a managed networking hub-and-spoke service that provides any-to-any connectivity across branches, VNets, and ExpressRoute circuits — without manual UDR management.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -100,6 +102,7 @@ window.EXAMS.az700 = {
       id:'core-networking', name:'Core Networking Infrastructure', weight:'20-25%', color:'#0078d4',
       sections: [
         { id:'dns-design', title:'Azure DNS & Private DNS', icon:'🔍',
+          example: `A retailer migrates its checkout API to a Storage account behind a Private Endpoint so payment traffic never leaves the VNet. Testing looks fine from the app team's own subnet, but a batch reporting VM in a peered VNet still resolves the storage name to its public IP and pushes traffic out over the internet, tripping a security alert. The fix is linking an <strong>Azure Private DNS</strong> zone named privatelink.blob.core.windows.net to every VNet that needs to reach the storage account, so all of them resolve the same name to the private endpoint's internal IP instead of the public one. Once the zone is linked everywhere, the reporting VM's traffic drops onto the private path automatically and the alert stops firing.`,
           render: () => `
 <div class="section-desc">DNS is the foundation of all network communication. Azure DNS hosts your public zones and Private DNS zones handle internal name resolution.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -129,6 +132,7 @@ window.EXAMS.az700 = {
 </div>` },
 
         { id:'appgw-frontdoor', title:'Application Gateway & Azure Front Door', icon:'🌩️',
+          example: `An online retailer runs its storefront out of a single Azure region behind an <strong>Application Gateway</strong> that path-routes /api/* to microservices and /images/* to a media backend, with WAF blocking SQL injection attempts. During a global product launch, shoppers in Australia and Europe complain about slow page loads because every request has to cross the ocean to the one regional gateway. The team puts <strong>Azure Front Door</strong> in front of it, caching product images at edge locations worldwide and routing each shopper to whichever region's Application Gateway is closest and healthy. Load times drop for international customers overnight, and when one region's backend has a bad deploy, Front Door's health probes quietly route traffic to the other regions before anyone files a support ticket.`,
           render: () => `
 <div class="section-desc">Application Gateway and Azure Front Door both provide Layer 7 (HTTP/S) load balancing and WAF, but at different scopes. Understanding which to use is critical for AZ-700.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -174,6 +178,7 @@ window.EXAMS.az700 = {
 </tbody></table>` },
 
         { id:'vnet-design', title:'VNet Design Best Practices & Azure Bastion', icon:'🏗️',
+          example: `A company stands up a hub VNet with a /26 GatewaySubnet, and its admins RDP into every spoke VM through public IPs because that is the fastest way to get started. A junior engineer accidentally opens RDP to the internet on one VM, and it gets compromised within hours. The security team removes public IPs from every VM and deploys a single Standard <strong>Azure Bastion</strong> in the hub's dedicated AzureBastionSubnet, which — because the hub is peered to every spoke — gives admins secure browser-based RDP/SSH into all of them without a Bastion in each spoke. Because the address spaces were planned with room to grow from day one, adding new spoke VNets later never collides with the existing ranges.`,
           render: () => `
 <div class="section-desc">Proper VNet address space design prevents costly refactoring. Azure Bastion provides secure admin access — a key AZ-700 topic.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -221,6 +226,7 @@ window.EXAMS.az700 = {
       id:'routing', name:'Design & Implement Routing', weight:'25-30%', color:'#f97316',
       sections: [
         { id:'routing-deep', title:'Routing Deep Dive', icon:'🗺️',
+          example: `A logistics company routes all spoke traffic through a firewall NVA in its hub VNet using UDRs, but every time the security team spins up a new NVA instance or changes its IP during a patch, someone has to remember to update UDRs across a dozen subnets — and one time they forget, silently blackholing a spoke's traffic for a day. They deploy <strong>Azure Route Server</strong> in the hub so the NVA advertises its routes over BGP instead, and Route Server propagates those routes to every connected subnet automatically. The next time the firewall is upgraded and its IP changes, routing updates itself within seconds and the on-call engineer never gets paged.`,
           render: () => `
 <div class="section-desc">Azure routing is automatic by default but can be fully customized. Understanding the routing priority order is critical for AZ-700.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -256,6 +262,7 @@ window.EXAMS.az700 = {
 </div>` },
 
         { id:'nat-lb', title:'NAT Gateway & Load Balancer Advanced', icon:'⚖️',
+          example: `A batch-processing company runs hundreds of worker VMs that all call the same third-party API to fetch pricing data, and by mid-morning half of them start failing with connection errors because they've exhausted the roughly 1,024 outbound SNAT ports available on the default path. The team attaches an <strong>Azure NAT Gateway</strong> to the subnet, which offers up to 64,000 SNAT ports per public IP and eliminates the exhaustion entirely, while switching the customer-facing tier to a <strong>Standard Load Balancer</strong> with an HA Ports rule so a single NVA firewall can inspect traffic on every port without per-port rules. SNAT failures disappear, and because Standard LB is secure by default, the team also has to explicitly add NSG rules — catching two misconfigured backend pools they didn't know were exposed.`,
           render: () => `
 <div class="section-desc">NAT Gateway provides reliable outbound internet connectivity for VNet resources. Azure Load Balancer Standard provides regional high availability with advanced features.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -290,6 +297,7 @@ window.EXAMS.az700 = {
 </div>` },
 
         { id:'nva-bgp-advanced', title:'NVA Patterns, BGP & Cross-Region Load Balancer', icon:'🔁',
+          example: `A global enterprise runs a pair of third-party firewalls as <strong>NVAs</strong> in its hub VNet, load-balanced by a Standard Load Balancer with an HA Ports rule so failover between the active-active pair is invisible to traffic. Their ExpressRoute circuit uses Microsoft Peering to reach Azure SQL and Storage, but after setup nothing routes — because Microsoft Peering silently advertises zero prefixes until a BGP route filter is explicitly attached to the circuit. Once the network engineer applies the route filter and adds AS Path Prepending to make the backup VPN path look less attractive than the primary circuit, Azure service traffic starts flowing over ExpressRoute as intended, with the VPN only kicking in if the circuit itself goes down. For their multi-region TCP-based trading platform, they also add a <strong>Cross-Region Load Balancer</strong> in front of the regional Standard LBs so a regional outage fails over at Layer 4 without touching DNS.`,
           render: () => `
 <div class="section-desc">Network Virtual Appliances, BGP route filtering, and global load balancing are advanced AZ-700 topics for enterprise architectures.</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -340,6 +348,7 @@ window.EXAMS.az700 = {
       id:'secure-networks', name:'Secure & Monitor Networks', weight:'15-20%', color:'#ef4444',
       sections: [
         { id:'network-security-deep', title:'Network Security Deep Dive', icon:'🔒',
+          example: `A company deploys Azure Firewall in its hub VNet, but each region's security team manages its own rule set independently, and after a merger nobody can say for certain whether the new subsidiary's traffic is actually being inspected the same way as the parent company's. The central security team adopts <strong>Azure Firewall Manager</strong> with a hierarchical policy — a parent policy enforcing baseline rules across every firewall, with child policies for region-specific exceptions — so a single change rolls out everywhere at once. When an auditor later asks whether a specific blocked IP ever reached a VM, the team turns on <strong>NSG Flow Logs</strong> feeding <strong>Traffic Analytics</strong> and answers the question from a dashboard in minutes instead of digging through packet captures.`,
           render: () => `
 <div class="section-desc">Layered network security in Azure: NSG (subnet/NIC) → Azure Firewall (VNet) → DDoS Protection (region) → WAF (application).</div>
 <div class="grid g2" style="margin-bottom:16px">
@@ -374,6 +383,7 @@ window.EXAMS.az700 = {
       id:'private-access', name:'Private Access to Azure Services', weight:'10-15%', color:'#8b5cf6',
       sections: [
         { id:'private-link', title:'Private Link & Private Endpoints', icon:'🔏',
+          example: `A healthcare SaaS company stores patient records in Azure SQL and wants to guarantee that data never crosses the public internet, even accidentally. They create a <strong>Private Endpoint</strong> for the SQL server inside their VNet and disable the database's public network access entirely, so the only path in is a private IP address that never leaves the Azure backbone. A hospital partner wants to consume one of the company's own APIs privately too, so the team puts that API behind a Standard Load Balancer and publishes it as a <strong>Private Link Service</strong>, letting the hospital create its own Private Endpoint to reach it without any VNet peering between the two organizations. When a compliance auditor asks for proof that patient data can't leak to the internet, the team points to the disabled public endpoints and the private-only network paths as the entire answer.`,
           render: () => `
 <div class="section-desc">Private Link brings Azure PaaS services into your VNet with private IPs, eliminating internet exposure.</div>
 <div class="grid g2" style="margin-bottom:16px">
